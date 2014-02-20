@@ -111,9 +111,13 @@ getBuses = function(depId, arrId, mainCallback) {
             if(day < 10) {
                 day = "0" + day;
             }
-
-            //var date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + now.getHours() + '&laMinute=' + now.getMinutes();
-            var date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + 08 + '&laMinute=' + 10;
+            
+            var date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + now.getHours() + '&laMinute=' + now.getMinutes();
+            
+            if(now.getHours() >= 21) {
+                date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + 08 + '&laMinute=' + 10;
+            }
+            
             var formatDepStop = depStop.stopName.replace(/ /g,"+").replace(/\//g, "%2F+");
             var formatArrStop = arrStop.stopName.replace(/ /g,"+").replace(/\//g, "%2F+");
             var depOptions = 'comDep=' + depStop.localityCode + '&pointDep=' + depStop.logicalId + '%24' + formatDepStop + '%242%24' + depStop.localityCode + '&numDep=';
