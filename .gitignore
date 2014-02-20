@@ -1,0 +1,28 @@
+node_modules
+.idea/
+lib-cov
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+
+pids
+logs
+results
+
+npm-debug.log
+node_modules
+
+# Ignore grunt cache files
+/.sass-cache
+/carsurfin/static/.sass-cache
+/carsurfin/static/.webassets-cache
+# Ignore Mac specific files
+*.DS_Store
+#Ignore generated css files
+*.css
+# Ignoring Grunt folder
+.grunt/*

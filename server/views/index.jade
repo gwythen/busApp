@@ -1,0 +1,25 @@
+doctype html
+html(lang='en', class='no-js ui-mobile-rendering')
+    head
+    meta(charset='utf-8')
+    title Marionette-Require-Boilerplate Lite
+    meta(name='viewport', content='user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width')
+    link(rel='stylesheet' type='text/css', href='css/idangerous.swiper.css')
+    link(rel='stylesheet' type='text/css', href='css/main.css')
+        
+    script(type='text/javascript').     
+        var require = {
+            config: {
+                'collections/StopCollection': {
+                    bootstrap: !{stops}
+                }
+            }
+        }; 
+
+    script(type='text/javascript', src='js/libs/require.js', data-main='js/app/config/Init.js')
+    script(src='http://localhost:35729/livereload.js')
+
+    body
+        div(data-role='page')
+        header
+        div#main(class='container-fluid')

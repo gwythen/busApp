@@ -1,0 +1,40 @@
+{
+  "name": "Mapulia",
+  "title": "An App to discover Puglia",
+  "description": "This is an App to discover Puglia",
+  "version": "1.0.0",
+  "homepage": "",
+  "author": {
+    "name": "Domenico De Fano",
+    "email": "",
+    "url": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:brettjonesdev/MRB-Lite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/brettjonesdev/MRB-Lite/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/brettjonesdev/MRB-Lite/blob/master/LICENSE-MIT"
+    }
+  ],
+  "devDependencies": {
+    "express": "3.x",
+    "mongodb": ">= 0.9.6-7",
+    "grunt-contrib-compass": "~0.3.0",
+    "grunt-contrib-jshint": "~0.6.0",
+    "grunt-contrib-requirejs": "~0.4.1",
+    "grunt-contrib-watch": "~0.4.4",
+    "grunt-contrib-jasmine": "~0.5.2",
+    "grunt-jsbeautifier": "~0.2.3",
+    "jsdom": ">= 0.10.1",
+    "request": ">= 2.33.0",
+    "jquery": "~1.8.3"
+  },
+  "main": "./server/server",
+  "keywords": ["Marionette.js", "Backbone.js", "Require.js", "Marionette and Require Boilerplate Lite"]
+}
