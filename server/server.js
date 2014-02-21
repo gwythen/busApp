@@ -114,7 +114,7 @@ getBuses = function(depId, arrId, mainCallback) {
             
             var date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + now.getHours() + '&laMinute=' + now.getMinutes();
             
-            if(now.getHours() >= 21) {
+            if(now.getHours() >= 21 || now.getHours() < 6) {
                 date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + 08 + '&laMinute=' + 10;
             }
             
@@ -133,7 +133,7 @@ getBuses = function(depId, arrId, mainCallback) {
                     });
                 },
                 function(body, callback){
-                    parseResults(body, function(results) {
+                    parseResults(body, depStop, function(results) {
                         callback(null, results);
                     });
                 },
@@ -144,12 +144,79 @@ getBuses = function(depId, arrId, mainCallback) {
     });
 };
 
-parseResults = function(body, parseCallback) {
+parseResults = function(body, depStop, parseCallback) {
     var window = jsdom(body).createWindow();
     var $ = require('jquery').create(window);
     var rows = $('#routesynthese tbody').children("tr");
     var results = null;
-    var detailsParse = function(body, result) {
+
+    var timetableParse = function(body, result, callback) {
+        var subWindow = jsdom(body).createWindow();
+        var $ = require('jquery').create(subWindow);
+        var rows = $("tbody tr[class^='row']");
+        var columnIndex = 0;
+        var nextLink = null;
+        var found = false;
+        for(var i = 0; i < rows.length; i++) {
+            var stopId = $(rows[i]).children("td[headers='arret']").attr("id").split("arret")[1];
+            if(stopId == depStop.originalId) {
+
+                found = true;
+                var columns = $(rows[i]).children(".horaire");
+                var minElem = 0;
+                var maxElem = 0;
+                for(var j = 0; j < columns.length; j++) {
+                    if($(columns[j]).text() != "|"){
+                        minElem = j;
+                        break;
+                    }
+                }
+                for(j = columns.length -1; j >= 0; j--) {
+                    if($(columns[j]).text() != "|"){
+                        maxElem = j;
+                        break;
+                    }
+                }
+                var minTime = Date.parse("01/01/2001 " + $(columns[minElem]).text());
+                var maxTime = Date.parse("01/01/2001 " + $(columns[maxElem]).text());
+                var depTime = Date.parse("01/01/2001 " + result.depHour);
+                if(depTime >= minTime && depTime <= maxTime) {
+                    for(j = 0; j < columns.length; j++) {
+                        if($(columns[j]).text() == result.depHour) {
+                            console.log(result.depHour);
+                            columnIndex = j;
+                            break;
+                        }
+                    }
+                } else {
+                    if(depTime < minTime) {
+                        //need to navigate back to the previous timetable page
+                        nextLink = rootUrl + "horaires_ligne/" + $(".hourPrev a").attr("href");
+                    } else {
+                        //need to navigate to the next timetable page
+                        nextLink = rootUrl + "horaires_ligne/" + $(".hourNext a").attr("href");
+                    }
+                }
+
+                break;
+            }
+        }
+        if(!nextLink && found) {
+            for(var k = 0; k < rows.length; k++) {
+                var currElem = $($(rows[k]).children(".horaire")[columnIndex]);
+                var dephour = currElem.text();
+                if(dephour !== "|") {
+                    result.rideDepHour = dephour;
+                    result.rideInDayNumber = currElem.attr("headers").split("course")[1];
+                    break;
+                }
+            }
+        }
+
+        callback(nextLink);
+    };
+
+    var detailsParse = function(body, result, callback) {
         var subWindow = jsdom(body).createWindow();
         var $ = require('jquery').create(subWindow);
         var lines = $(".lineRoute img");
@@ -157,16 +224,38 @@ parseResults = function(body, parseCallback) {
         for(var i = 0; i < lines.length; i++) {
             linesAr.push($(lines[i]).attr("alt"));
         }
-        result.line = linesAr;
+        result.lineName = linesAr;
         var lineTimetableLink = rootUrl + $(".lineRoute a").first().attr("href").split("../")[1];
-        console.log("linedetails " + lineTimetableLink);
-        results.push(result);
+        var lineid = lineTimetableLink.split("lign_id=")[1].split("&date")[0];
+        result.lineId = lineid;
+        callback(lineTimetableLink);
+    };
+
+    var searchTimetable = function(lineTimetableLink, result, searchCallback) {
+        async.waterfall([
+            function(callback) {
+                getWebPage(lineTimetableLink, function(body) {
+                    callback(null, body);
+                });
+            },
+            function(body, callback) {
+                if(result.lineName.length == 1) {
+                    timetableParse(body, result, function(otherLink) {
+                        callback(null, true, otherLink);
+                    });
+                } else {
+                    callback(null, false);
+                }
+            },
+        ], function (err, include, otherLink) {
+
+           searchCallback(include, otherLink);
+        });
     };
 
     if($('.error').length === 0) {
         results = [];
-        console.log(rows.length);
-        async.each(rows, function(row, callback) {
+        async.each(rows, function(row, mainCallback) {
             var result = {};
             var currElem = $(row);
             var depTime = currElem.children("td[headers='depart']").text().split("h");
@@ -190,10 +279,41 @@ parseResults = function(body, parseCallback) {
             result.depDate = depDate;
             var url = rootUrl + 'ri/';
             var detlink = url + currElem.children("td[headers='details']").children("a").first().attr('href');
-            getWebPage(detlink, function(body) {
-                detailsParse(body, result);
-                callback();
+            
+
+            async.waterfall([
+                //get the page containing ride info
+                function(callback){
+                    getWebPage(detlink, function(body) {
+                        callback(null, body);
+                    });
+                },
+                function(body, callback) {
+                    detailsParse(body, result, function(lineTimetableLink) {
+                         callback(null, lineTimetableLink);
+                    });
+                },
+                //get the page containing timetables related to the ride
+                function(lineTimetableLink, callback) {
+                    searchTimetable(lineTimetableLink, result, function(include, otherLink) {
+                        if(include && otherLink) {
+                             console.log(otherLink);
+                            searchTimetable(otherLink, result, function(include, otherLink) {
+                                callback(null, include);
+                            });
+                        } else {
+                            callback(null, include);
+                        }
+                    });
+                },
+            ], function (err, include) {
+                if(include) {
+                    results.push(result);
+                }
+                
+                mainCallback();
             });
+
             //getWebPage(detlink, detailsParse, args);
         }, function(err) {
             if (err) return next(err);

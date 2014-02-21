@@ -9,7 +9,7 @@ define(["jquery","backbone","models/Stop", 'module'],
       }
     });
 
-    Stops.out = new Stops(module.config().bootstrap[2]);
-    Stops.in = new Stops(module.config().bootstrap[1]);
+    Stops.out = new Stops(module.config().bootstrap[1]);
+    Stops.in = new Stops(module.config().bootstrap[2]);
     return Stops;
   });

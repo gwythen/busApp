@@ -10,19 +10,23 @@ define([
   var Search = Backbone.Model.extend({
   urlRoot: "api/search",
     url: function() {
-    var url = this.urlRoot;
-    var now = new Date();
-    var depStop = {};
-    var arrStop = {};
-    if(now.getHours() <= 12) {
-      depStop = this.get("outDepStop").originalId;
-      arrStop = this.get("outArrStop").originalId;
-    } else {
-      arrStop = this.get("inDepStop").originalId;
-      depStop = this.get("inArrStop").originalId;
-    }
-    url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop;
-    return url;
+      var url = this.urlRoot;
+      var now = new Date();
+      var depStop = {};
+      var arrStop = {};
+      console.log(this.get("outDepStop"));
+      console.log(this.get("outArrStop"));
+      console.log(this.get("inDepStop"));
+      console.log(this.get("inArrStop"));
+      if(now.getHours() <= 12) {
+        depStop = this.get("outDepStop").originalId;
+        arrStop = this.get("outArrStop").originalId;
+      } else {
+        arrStop = this.get("inDepStop").originalId;
+        depStop = this.get("inArrStop").originalId;
+      }
+      url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop;
+      return url;
   },
   initialize: function() {
       this.set("outDepStop", null);
@@ -45,6 +49,7 @@ define([
     if(localStorage.getItem('230Stops')) {
       try {
         var stops = JSON.parse(localStorage.getItem('230Stops'));
+        console.log(stops);
         this.set("outDepStop", stops.outDepStop);
         this.set("outArrStop",  stops.outArrStop);
         this.set("inDepStop", stops.inDepStop);
