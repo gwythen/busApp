@@ -183,7 +183,6 @@ parseResults = function(body, depStop, parseCallback) {
                 if(depTime >= minTime && depTime <= maxTime) {
                     for(j = 0; j < columns.length; j++) {
                         if($(columns[j]).text() == result.depHour) {
-                            console.log(result.depHour);
                             columnIndex = j;
                             break;
                         }

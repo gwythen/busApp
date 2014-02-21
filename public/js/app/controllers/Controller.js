@@ -1,5 +1,5 @@
-define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView', 'views/NextBusView', 'models/BusSearch', 'models/Errormessage', 'views/ErrorView', 'views/SwipableLayout'],
-    function (App, Backbone, Marionette, WelcomeView, HeaderView, NextBusView, BusSearch, ErrorMessage, ErrorView, SwipableLayout) {
+define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView', 'views/NextBusView', 'models/BusSearch', 'models/Errormessage', 'views/ErrorView', 'views/SwipableLayout', 'views/LoadingView'],
+    function (App, Backbone, Marionette, WelcomeView, HeaderView, NextBusView, BusSearch, ErrorMessage, ErrorView, SwipableLayout, LoadingView) {
     return Backbone.Marionette.Controller.extend({
         initialize:function (options) {
             App.headerRegion.show(new HeaderView());
@@ -23,6 +23,7 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
         },
 
         fetchResults: function() {
+            App.mainRegion.show(new LoadingView());
             var self = this;
             this.search.fetch().done(function (data) {
                 var results = self.search.get('results');
@@ -34,14 +35,12 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
                         layout.add(nextBusView, results.models[i].get("depHour"));
                     }
                     layout.show();
-                    //App.mainRegion.show(nextBusView);
                 } else {
                     var error = new ErrorMessage();
                     error.set("message", "No results found");
                     error.set("type", "notFound");
                     App.mainRegion.show(new ErrorView({model: error}));
                 }
-
             });
         }
 
