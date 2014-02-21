@@ -87,6 +87,21 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 	float:left;
 }
 
+.welcome-content {
+  margin-top: $headerHeight;
+  padding-top: 2rem;
+}
+
+.appHeader {
+  font-size: 3rem;
+  font-family: Lato-Light;
+  margin-bottom:3rem;
+}
+
+.stopInput {
+  margin-top: 2rem;
+}
+
 .stops-typeahead {
 	position: relative;
 	text-align: center;
