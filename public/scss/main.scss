@@ -100,6 +100,9 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 
 .stopInput {
   margin-top: 2rem;
+  p {
+    font-size: 1.6rem;
+  }
 }
 
 .stops-typeahead {
@@ -115,13 +118,13 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 
 .tt-input,
 .tt-hint {
-    padding: 0.5rem 0.6rem;
+    padding: 0.8rem 0.8rem;
     font-size: 1.7rem;
     border: 1px solid #ccc;
     outline: none;
-    color: #999;
-    height: 2.7rem;
-    width: 17rem;
+    color: #757474;
+    height: 3rem;
+    width: 20rem;
     border-radius: 0;
     -webkit-box-shadow: 4px 3px 5px rgba(50, 50, 50, 0.2);
     -moz-box-shadow:    4px 3px 5px rgba(50, 50, 50, 0.2) !important;
@@ -179,6 +182,7 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 	background-color: transparent;
 	border-color: white;
 	padding: 8px 16px;
+  color: white;
 }
 
 .right-aligned {
