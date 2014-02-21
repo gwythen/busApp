@@ -24,7 +24,7 @@ define([ 'marionette', 'handlebars', 'text!templates/nextBus.html'],
                     this.ui.counter.text("TOO LATE!");
                 } else {
                     var fiveMins = 5 * 60 * 1000;
-                    this.ui.counter.text("IN " + counter.textual);
+                    this.ui.counter.text(counter.textual);
                     if(counter.diff < fiveMins) {
                         this.ui.counter.addClass("nearing");
                     } else {
