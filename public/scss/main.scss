@@ -174,9 +174,18 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 	text-align: center;
 }
 
+.nextBus-content {
+  padding-top: 1rem;
+}
+
 .nextHeader {
 	font-size: 2.5rem;
 	font-family: Lato-Light;
+}
+
+.lineName {
+  text-transform:uppercase;
+  font-family: Lato-Light;
 }
 
 .nextTime {
@@ -224,24 +233,6 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   bottom: 0;
   z-index: 0;
 }
-
-// .swiper-nav {
-//   height: 4rem;
-//   position: absolute;
-//   left: 0;
-//   top: $headerHeight;
-//   width: 100%;
-//   -webkit-box-shadow: inset 0px 1px 3px 3px rgba(50, 50, 50, 0.3);
-//   -moz-box-shadow:    inset 0px 1px 3px 3px rgba(50, 50, 50, 0.3);
-//   box-shadow:         inset 0px 1px 3px 3px rgba(50, 50, 50, 0.3);
-// }
-
-// .swiper-nav .swiper-slide {
-//   text-align: center;
-//   position: relative;
-//   width: 16rem;
-//   height: 100%;
-// }
 
 .swiper-content .swiper-slide {
 	padding-right: 2rem;
@@ -297,6 +288,7 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   width: 80px;
   position: relative;
 }
+
 .clock:after{
   content: "";
   position: absolute;

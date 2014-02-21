@@ -81,7 +81,8 @@ getWebPage = function(url, callback) {
     var timeoutInMilliseconds = 10*1000;
     var opts = {
         url: url,
-        timeout: timeoutInMilliseconds
+        timeout: timeoutInMilliseconds,
+        encoding: 'binary'
     };
 
     request(opts, function (err, res, body) {
@@ -133,7 +134,7 @@ getBuses = function(depId, arrId, mainCallback) {
                     });
                 },
                 function(body, callback){
-                    parseResults(body, depStop, function(results) {
+                    parseResults(body, depStop, arrStop, function(results) {
                         callback(null, results);
                     });
                 },
@@ -144,7 +145,7 @@ getBuses = function(depId, arrId, mainCallback) {
     });
 };
 
-parseResults = function(body, depStop, parseCallback) {
+parseResults = function(body, depStop, arrStop, parseCallback) {
     var window = jsdom(body).createWindow();
     var $ = require('jquery').create(window);
     var rows = $('#routesynthese tbody').children("tr");
@@ -226,7 +227,10 @@ parseResults = function(body, depStop, parseCallback) {
         result.lineName = linesAr;
         var lineTimetableLink = rootUrl + $(".lineRoute a").first().attr("href").split("../")[1];
         var lineid = lineTimetableLink.split("lign_id=")[1].split("&date")[0];
+        var direction = lineTimetableLink.split("sens=")[1];
         result.lineId = lineid;
+        result.direction = $(".lineRoute .important").text();
+        
         callback(lineTimetableLink);
     };
 
@@ -261,6 +265,8 @@ parseResults = function(body, depStop, parseCallback) {
             var arrTime = currElem.children("td[headers='arrivee']").text().split("h");
             result.depHour =  depTime[0] + ":" + depTime[1];
             result.arrHour = arrTime[0] + ":" + arrTime[1];
+            result.depStop = depStop.stopName;
+            result.arrStop = arrStop.stopName;
             var durationPieces = currElem.children("td[headers='duree']").first().html().split("<br />")[0].split("<abbr");
             var dur0 = durationPieces[0];
             var durSubPieces = durationPieces[1].split("</abbr>");
@@ -284,11 +290,13 @@ parseResults = function(body, depStop, parseCallback) {
                 //get the page containing ride info
                 function(callback){
                     getWebPage(detlink, function(body) {
+                        console.log("Details Page: " + detlink);
                         callback(null, body);
                     });
                 },
                 function(body, callback) {
                     detailsParse(body, result, function(lineTimetableLink) {
+                         console.log("Timetable Page: " + lineTimetableLink);
                          callback(null, lineTimetableLink);
                     });
                 },
@@ -296,7 +304,7 @@ parseResults = function(body, depStop, parseCallback) {
                 function(lineTimetableLink, callback) {
                     searchTimetable(lineTimetableLink, result, function(include, otherLink) {
                         if(include && otherLink) {
-                             console.log(otherLink);
+                             console.log("Further Timetable Page: " + otherLink);
                             searchTimetable(otherLink, result, function(include, otherLink) {
                                 callback(null, include);
                             });
@@ -341,6 +349,7 @@ server.get('/api/stops', function(req, res) {
 server.get('/api/search', function(req, res) {
     getBuses(req.query.depStop, req.query.arrStop, function(results) {
         console.log("returning " + (results ? results.length : 0) + " results");
+        console.log(results);
         return res.send(results);
     });
 });
