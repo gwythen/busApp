@@ -19,11 +19,11 @@ define([
       console.log(this.get("inDepStop"));
       console.log(this.get("inArrStop"));
       if(now.getHours() <= 12) {
-        depStop = this.get("outDepStop").originalId;
-        arrStop = this.get("outArrStop").originalId;
+        depStop = this.get("outDepStop").id;
+        arrStop = this.get("outArrStop").id;
       } else {
-        arrStop = this.get("inDepStop").originalId;
-        depStop = this.get("inArrStop").originalId;
+        arrStop = this.get("inDepStop").id;
+        depStop = this.get("inArrStop").id;
       }
       url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop;
       return url;

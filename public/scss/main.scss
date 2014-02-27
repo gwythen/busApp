@@ -87,6 +87,11 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 	float:left;
 }
 
+.error-container {
+  margin-top: $headerHeight;
+  padding-top: 2rem;
+}
+
 .welcome-content {
   margin-top: $headerHeight;
   padding-top: 2rem;
@@ -198,7 +203,7 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 }
 
 .nextHeader {
-	font-size: 2.5rem;
+	font-size: 2.2rem;
 	font-family: Lato-Light;
   line-height:1;
   //text-transform:uppercase;
@@ -227,7 +232,7 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 
 .nextTime {
 	font-family: Lato-hairline;
-	font-size: 10rem;
+	font-size: 9rem;
 	line-height: 0.75;
   float: right;
   clear: both;

@@ -9,7 +9,7 @@ var express = require("express"),
     request = require('request'),
     jsdom = require('jsdom').jsdom,
     async = require('async');
-
+var DataProvider = new DataProvider('localhost', 27017);
 // SERVER CONFIGURATION
 // ====================
 server.configure(function () {
@@ -45,6 +45,7 @@ getStops = function(callback) {
             newStop.originalId = stops[i].originalId;
             newStop.logicalId = stops[i].logicalId;
             newStop.operatorId = stops[i].operatorId;
+            newStop.id = stops[i]._id;
             stopsListData.push(newStop);
         }
         callback(stops);
@@ -52,8 +53,8 @@ getStops = function(callback) {
     });
 };
 
-getAllOrderedStops = function(callback) {
-    DataProvider.getAllOrderedStops(function(error, stops){
+getAllOrderedStops = function(line, callback) {
+    DataProvider.getAllOrderedStops(line, function(error, stops){
       if(!error) {
         var stopsListData = {};
         for (var line in stops ) {
@@ -63,11 +64,12 @@ getAllOrderedStops = function(callback) {
             for(var i = 0; i < stopsline.length; i++) {
                 var newStop = {};
                 newStop.name = stopsline[i].stopName;
-                newStop.lat = stopsline[i].lat;
-                newStop.lon = stopsline[i].lon;
+                newStop.lat = stopsline[i].latitude;
+                newStop.lon = stopsline[i].longitude;
                 newStop.originalId = stopsline[i].originalId;
                 newStop.logicalId = stopsline[i].logicalId;
                 newStop.operatorId = stopsline[i].operatorId;
+                newStop.id = stopsline[i]._id;
                 stopsListData[line].push(newStop);
             }
         }
@@ -99,49 +101,54 @@ getWebPage = function(url, callback) {
 
 getBuses = function(depId, arrId, mainCallback) {
     DataProvider.getStop(depId, function(error, depStop) {
-        DataProvider.getStop(arrId, function(error, arrStop) {
-            var now = new Date();
-            var url = rootUrl + 'ri/?';
-            var month = now.getMonth();
-            
-            if(month < 10) {
-                month = "0" + month;
-            }
+        if(depStop) {
+            DataProvider.getStop(arrId, function(error, arrStop) {
+                if(arrStop) {
+                    var now = new Date();
+                    var url = rootUrl + 'ri/?';
+                    var month = now.getMonth();
+                    
+                    if(month < 10) {
+                        month = "0" + month;
+                    }
 
-            var day = now.getDate();
-            if(day < 10) {
-                day = "0" + day;
-            }
-            
-            var date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + now.getHours() + '&laMinute=' + now.getMinutes();
-            
-            if(now.getHours() >= 21 || now.getHours() < 6) {
-                date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + 08 + '&laMinute=' + 10;
-            }
-            
-            var formatDepStop = depStop.stopName.replace(/ /g,"+").replace(/\//g, "%2F+");
-            var formatArrStop = arrStop.stopName.replace(/ /g,"+").replace(/\//g, "%2F+");
-            var depOptions = 'comDep=' + depStop.localityCode + '&pointDep=' + depStop.logicalId + '%24' + formatDepStop + '%242%24' + depStop.localityCode + '&numDep=';
-            var arrOptions = '&comArr=' + arrStop.localityCode + '&pointArr=' + arrStop.logicalId + '%24' + formatArrStop + '%242%24' + arrStop.localityCode + '&numArr=';
-            var otherOptions = '&leMeridien=&typeDate=68&critereRI=1&rub_code=4&laction=synthese&modeBus=1&modeTram=1&modeCar=1&modeTrain=1&modeBoat=1&showOptions=&selectOpt=0';
+                    var day = now.getDate();
+                    if(day < 10) {
+                        day = "0" + day;
+                    }
+                    
+                    var date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + now.getHours() + '&laMinute=' + now.getMinutes();
+                    
+                    if(now.getHours() >= 21 || now.getHours() < 6) {
+                        date = '&laDate=' + day + '%2F' + month + '%2F' + now.getFullYear() + '&lHeure=' + 08 + '&laMinute=' + 10;
+                    }
 
-            var finalUrl = url + depOptions + arrOptions + date + otherOptions;
-            console.log(finalUrl);
-            async.waterfall([
-                function(callback){
-                    getWebPage(finalUrl, function(body) {
-                        callback(null, body);
+                    var formatDepStop = depStop.stopName.replace(/ /g,"+").replace(/\//g, "%2F+");
+                    var formatArrStop = arrStop.stopName.replace(/ /g,"+").replace(/\//g, "%2F+");
+                    var depOptions = 'comDep=' + depStop.localityCode + '&pointDep=' + depStop.logicalId + '%24' + formatDepStop + '%242%24' + depStop.localityCode + '&numDep=';
+                    var arrOptions = '&comArr=' + arrStop.localityCode + '&pointArr=' + arrStop.logicalId + '%24' + formatArrStop + '%242%24' + arrStop.localityCode + '&numArr=';
+                    var otherOptions = '&leMeridien=&typeDate=68&critereRI=1&rub_code=4&laction=synthese&modeBus=1&modeTram=1&modeCar=1&modeTrain=1&modeBoat=1&showOptions=&selectOpt=0';
+
+                    var finalUrl = url + depOptions + arrOptions + date + otherOptions;
+                    console.log(finalUrl);
+                    async.waterfall([
+                        function(callback){
+                            getWebPage(finalUrl, function(body) {
+                                callback(null, body);
+                            });
+                        },
+                        function(body, callback){
+                            parseResults(body, depStop, arrStop, function(results) {
+                                callback(null, results);
+                            });
+                        },
+                    ], function (err, result) {
+                       mainCallback(result);
                     });
-                },
-                function(body, callback){
-                    parseResults(body, depStop, arrStop, function(results) {
-                        callback(null, results);
-                    });
-                },
-            ], function (err, result) {
-               mainCallback(result);
+                } else mainCallback();
             });
-        });
+        } else mainCallback();
+        
     });
 };
 
@@ -334,14 +341,25 @@ parseResults = function(body, depStop, arrStop, parseCallback) {
     }
 };
 
+server.get('/api/reset/:id/:code', function(req, res) {
+    if(req.params.id == "domenico" && req.params.code == 151086) {
+        DataProvider.reset(function() { 
+            return res.send("done!");
+        });
+    } else {
+        return res.send("Sorry, this action is forbidden");
+    }
+});
+
 server.get('/', function(req, res) {
-    getAllOrderedStops(function(results){
+    getAllOrderedStops("230", function(results){
         return res.render('index', {stops: JSON.stringify(results)});
     });
 });
 
 server.get('/api/stops', function(req, res) {
     server.getStops(function(results) {
+        console.log("results" + results);
         return res.send(results);
     });
 });
@@ -355,7 +373,7 @@ server.get('/api/search', function(req, res) {
 });
 
 server.get('*', function(req, res) {
-    getAllOrderedStops(function(results){
+    getAllOrderedStops("230", function(results){
         return res.render('index', {stops: JSON.stringify(results)});
     });
 });

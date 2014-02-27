@@ -1,70 +1,125 @@
-//var Db = require('mongodb').Db;
-// var Connection = require('mongodb').Connection;
-// var Server = require('mongodb').Server;
-// var BSON = require('mongodb').BSON;
-// var ObjectID = require('mongodb').ObjectID;
+var mongoose = require('mongoose')
+  , fs = require('fs')
+  , async = require('async');
+
 var stops = require('./Stops');
 var stopsOrders = require('./StopOrders');
+var schemas = {};
 
-// DataProvider = function(host, port) {
-//   // this.db= new Db('busdb', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
-//   // this.db.open(function(){});
-// };
 
-DataProvider = {};
-
-// DataProvider.prototype.getStopsCollection = function(callback) {
-//   this.db.collection('stops', function(error, stops_collection) {
-//     if( error ) callback(error);
-//     else callback(null, stops_collection);
-//   });
-// };
-
-// //find all stops in db 
-// DataProvider.prototype.findAllStops = function(callback) {
-//     this.getPlacesCollection(function(error, stops_collection) {
-//       if( error ) callback(error)
-//       else {
-//         stops_collection.find().toArray(function(error, results) {
-//           if( error ) callback(error)
-//           elsAe callback(null, results)
-//         });
-//       }
-//     });
-// };
-
-DataProvider.getAllStops = function(callback) {
-    callback(null, stops);
+DataProvider = function(host, port) {
+  mongoose.connect('mongodb://localhost/busApp');
+  this.db = mongoose.connection;
+  this.db.on('error', console.error.bind(console, 'connection error:'));
+  this.db.once('open', function callback () {
+    schemas.Line = require('./models/Line.js');
+    schemas.Stop = require('./models/Stop.js');
+    schemas.Observation = require('./models/Observation.js');
+    console.log("connected");
+  });
 };
 
-DataProvider.getStop = function(stopId, callback) {
-  var found = null;
-  for(var i = 0; i < stops.length; i++) {
-    if(stops[i].originalId == stopId) {
-       found = stops[i];
-       break;
-    }
-  }
-  if(found){
-    callback(null, found);
-  }
+
+DataProvider.prototype.reset = function(mainCallback) {
+    var allOrderedStops = {};
+    var twothirty = {};
+
+    async.waterfall([
+      //Reset Lines
+      function(wfcallback) {
+        schemas.Line.remove({}, function(err) { 
+           console.log('lines removed');
+           wfcallback(err);
+        });
+      },
+      //Reset Stops
+      function(wfcallback) {
+        schemas.Stop.remove({}, function(err) { 
+           console.log('stops removed');
+           wfcallback(err);
+        });
+      },
+      //Create Stops
+      function(wfcallback) {
+        allOrderedStops[1] = {
+          direction: "Sophia",
+          originalDirectionId: 1,
+          allStops: []
+        };
+        allOrderedStops[2] = {
+          direction: "Nice",
+          originalDirectionId: 2,
+          allStops: []
+        };
+        async.each(stopsOrders, function(stopsOrder, loopCallback) {
+          var currLine = stopsOrder.directedline_id;
+          var newStop = stops[stopsOrder.stop_id - 1];
+          console.log(newStop);
+          schemas.Stop.create(newStop, function (err, stop) {
+              if (err) {
+                console.log("error" + err);
+              } else {
+                allOrderedStops[currLine].allStops.push(stop);
+                console.log("stop created");
+              }
+              loopCallback(err);
+          });
+        }, function(err) {
+            wfcallback(err);
+        });
+      },
+      //Create lines
+      function(wfcallback){
+        twothirty = new schemas.Line({
+          lineOriginalId: 468,
+          name: "230",
+          directedRoutes:[allOrderedStops[1], allOrderedStops[2]]
+        });
+        schemas.Line.create(twothirty, function (err) {
+            if (err) {
+              console.log("error" + err);
+            } else {
+              console.log("line created");
+            }
+            wfcallback(err);
+        });
+    }], function (err) {
+      if(err) {
+        console.log("error " + err);
+      } else {
+        mainCallback();
+      }
+    });
+};
+
+DataProvider.prototype.getAllStops = function(callback) {
+  schemas.Stop.find({}, function(err, results){
+    callback(null, results);
+  });
     
 };
 
-DataProvider.getAllStopOrders = function(callback) {
-    callback(null, stopsOrders);
+DataProvider.prototype.getStop = function(stopId, callback) {
+  var id = mongoose.Types.ObjectId(stopId);
+  schemas.Stop.find({_id: id}, function(err, result){
+    callback(null, result.length > 0 ? result[0] : null);
+  });
+    
 };
 
-DataProvider.getAllOrderedStops = function(callback) {
-    var allOrderedStops = {};
-    allOrderedStops[1] = [];
-    allOrderedStops[2] = [];
-    for(var i = 0; i < stopsOrders.length; i++) {
-      var currLine = stopsOrders[i].directedline_id;
-      var newStop = stops[stopsOrders[i].stop_id - 1];
-      allOrderedStops[currLine].push(newStop);
-    }
-    callback(null, allOrderedStops);
+DataProvider.prototype.getAllOrderedStops = function(line, callback) {
+    schemas.Line.findOne({name: line}).populate('directedRoutes.allStops').exec(
+      function (err, result) {   
+        var allOrderedStops = {};
+        allOrderedStops[1] = [];
+        allOrderedStops[2] = [];
+        for(var i = 0; i < result.directedRoutes.length; i++) {
+          var currLine = result.directedRoutes[i].originalDirectionId;
+          allOrderedStops[currLine] = result.directedRoutes[i].allStops;
+        }
+        callback(null, allOrderedStops);
+      }
+    );
 };
 
 
