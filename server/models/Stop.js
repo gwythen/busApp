@@ -1,7 +1,7 @@
 // Physical Stop Model
  
-var mongoose = require('mongoose')
-   ,Schema = mongoose.Schema;
+var mongoose = require('mongoose'),
+	Schema = mongoose.Schema;
  
 var stopSchema = new Schema({
     stopName: String,

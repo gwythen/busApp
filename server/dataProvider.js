@@ -1,6 +1,7 @@
-var mongoose = require('mongoose')
-  , fs = require('fs')
-  , async = require('async');
+var mongoose = require('mongoose'),
+    fs = require('fs'),
+    async = require('async'),
+    moment = require('moment');
 
 var stops = require('./Stops');
 var stopsOrders = require('./StopOrders');
@@ -27,14 +28,14 @@ DataProvider.prototype.reset = function(mainCallback) {
     async.waterfall([
       //Reset Lines
       function(wfcallback) {
-        schemas.Line.remove({}, function(err) { 
+        schemas.Line.remove({}, function(err) {
            console.log('lines removed');
            wfcallback(err);
         });
       },
       //Reset Stops
       function(wfcallback) {
-        schemas.Stop.remove({}, function(err) { 
+        schemas.Stop.remove({}, function(err) {
            console.log('stops removed');
            wfcallback(err);
         });
@@ -42,12 +43,12 @@ DataProvider.prototype.reset = function(mainCallback) {
       //Create Stops
       function(wfcallback) {
         allOrderedStops[1] = {
-          direction: "Sophia",
+          direction: "toSophia",
           originalDirectionId: 1,
           allStops: []
         };
         allOrderedStops[2] = {
-          direction: "Nice",
+          direction: "fromSophia",
           originalDirectionId: 2,
           allStops: []
         };
@@ -94,32 +95,79 @@ DataProvider.prototype.reset = function(mainCallback) {
 
 DataProvider.prototype.getAllStops = function(callback) {
   schemas.Stop.find({}, function(err, results){
-    callback(null, results);
+    callback(err, results);
   });
-    
 };
 
 DataProvider.prototype.getStop = function(stopId, callback) {
   var id = mongoose.Types.ObjectId(stopId);
   schemas.Stop.find({_id: id}, function(err, result){
-    callback(null, result.length > 0 ? result[0] : null);
+    callback(err, result.length > 0 ? result[0] : null);
   });
     
 };
 
 DataProvider.prototype.getAllOrderedStops = function(line, callback) {
     schemas.Line.findOne({name: line}).populate('directedRoutes.allStops').exec(
-      function (err, result) {   
+      function (err, result) {
         var allOrderedStops = {};
         allOrderedStops[1] = [];
         allOrderedStops[2] = [];
-        for(var i = 0; i < result.directedRoutes.length; i++) {
-          var currLine = result.directedRoutes[i].originalDirectionId;
-          allOrderedStops[currLine] = result.directedRoutes[i].allStops;
+        if(result) {
+          for(var i = 0; i < result.directedRoutes.length; i++) {
+            var currLine = result.directedRoutes[i].originalDirectionId;
+            allOrderedStops[currLine] = result.directedRoutes[i].allStops;
+          }
         }
-        callback(null, allOrderedStops);
+        callback(err, allOrderedStops);
       }
     );
+};
+
+DataProvider.prototype.getLine = function(line, callback) {
+  schemas.Line.findOne({name: line}).populate('directedRoutes.allStops').exec(
+      function (err, result) {
+        callback(err, result);
+      }
+  );
+};
+
+DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
+  var date = new Date();
+  var today = moment();
+  today.second(0);
+  today.millisecond(0);
+  today.minute(today.minute() - 10);
+  var tomorrow = today.add('days', 1);
+  console.log(direction);
+
+  var query = schemas.Line.find({})
+    .where('directedRoutes.direction', direction)
+    .all('directedRoutes.allStops', [depId, arrId])
+    .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
+      elem.where('stop', depId);
+      elem.where('scheduleDate').gte(today.valueOf()).lte(tomorrow.valueOf());
+    })
+    .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
+      elem.where('stop', arrId);
+      elem.where('scheduleDate').gt(today.valueOf()).lte(tomorrow.valueOf());
+    });
+
+  query.exec(function(err, result) {
+    console.log(result);
+    callback(err, result);
+  });
+};
+
+DataProvider.prototype.setLine = function(update, callback) {
+  schemas.Line.findOne({_id: update._id}, function(err, line) {
+    if(!err) {
+        line.directedRoutes = update.directedRoutes;
+        line.save(function(err) {
+          callback(err);
+        });
+    }
+  });
 };
 
 

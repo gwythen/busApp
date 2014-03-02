@@ -8,7 +8,9 @@ var express = require("express"),
     server = module.exports = express(),
     request = require('request'),
     jsdom = require('jsdom').jsdom,
-    async = require('async');
+    async = require('async'),
+    moment = require('moment');
+
 var DataProvider = new DataProvider('localhost', 27017);
 // SERVER CONFIGURATION
 // ====================
@@ -99,7 +101,153 @@ getWebPage = function(url, callback) {
     });
 };
 
-getBuses = function(depId, arrId, mainCallback) {
+getBuses = function(depId, arrId, line, direction, mainCallback) {
+    DataProvider.getBuses(depId, arrId, direction, function(error, results) {
+        if(results.length > 0) {
+           mainCallback(results);
+        } else {
+            //scrapeBuses(depId, arrId, direction, mainCallback);
+            scrapeBuses2(depId, arrId, line, direction, mainCallback);
+        }
+    });
+};
+
+scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
+    DataProvider.getLine(line, function(error, result) {
+        var lineId = result.lineOriginalId;
+        var directedRoute = "";
+        var dirIndex = 0;
+        //var today = moment();
+        var today = moment().add('days', 1);
+        for(var i = 0; i < result.directedRoutes.length; i++) {
+            if(result.directedRoutes[i].direction == direction) {
+                directedRoute = result.directedRoutes[i];
+                dirIndex = i;
+            }
+        }
+        var url = "http://www.ceparou06.fr/horaires_ligne/index.asp?rub_code=6&thm_id=0&lign_id=" + lineId + "&sens=" + directedRoute.originalDirectionId + "&date=" + today.format("DD") + "%2F" + today.format("MM") + "%2F" + today.format("YYYY") + "&index=";
+        console.log(url);
+        var currIndex = 1;
+        var maxIndex = 2;
+        var totalRides = [];
+        async.doWhilst(
+            function (docallback) {
+                async.waterfall([
+                    function(callback) {
+                        getWebPage(url+currIndex, function(body) {
+                            callback(null, body);
+                        });
+                    },
+                    function(body, callback) {
+                        parseTimetable2(body, directedRoute.allStops, function(rides, curr, max) {
+                            callback(null, rides, curr, max);
+                        });
+                    }
+                ], function (err, rides, curr, max) {
+                    totalRides.push.apply(totalRides, rides);
+                    currIndex = curr;
+                    maxIndex = max;
+                    docallback();
+                });
+            },
+            function () { return currIndex < maxIndex; },
+            function (err) {
+                if(totalRides.length > 0) {
+                    var itineraries = directedRoute.itineraries;
+                    for(var i = 0; i < totalRides.length; i++) {
+                        var currRide = totalRides[i];
+                        var itin = null;
+                        for(var j = 0; j < itineraries.length; j++) {
+                            itin = j;
+                            var currItin = itineraries[j];
+                            if(currItin.stopOrder.length == currRide.stopOrder.length) {
+                                for(var k = 0; k < currItin.stopOrder.length; k++) {
+                                    if(currItin.stopOrder[k] != currRide.stopOrder[k]) {
+                                        itin = null;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                itin = null;
+                            }
+                        }
+                        if(itin) {
+                            itineraries[itin].rides.push(currRide);
+                        } else {
+                            var itinerary = {};
+                            itinerary.stopOrder = currRide.stopOrder;
+                            itinerary.rides = [];
+                            delete currRide.stopOrder;
+                            itinerary.rides.push(currRide);
+                            itineraries.push(itinerary);
+                        }
+                    }
+                    directedRoute.itineraries = itineraries;
+                    result.directedRoutes[dirIndex] = directedRoute;
+
+                    DataProvider.setLine(result, function(error) {
+                        console.log("data saved to the database");
+                    });
+                }
+                    
+                mainCallback(totalRides);
+            }
+        );
+    });
+};
+
+parseTimetable2 = function(body, stops, callback) {
+    var subWindow = jsdom(body).createWindow();
+    var $ = require('jquery').create(subWindow);
+    var rows = $("tbody tr[class^='row']");
+    var columns = $(rows[0]).children(".horaire");
+    var columnIndex = 0;
+    var rides = [];
+    var currIndex = 0;
+    var maxIndex = 0;
+    if(rows.length > 0) {
+        currIndex = parseInt($(".hourCourses").text().split("à ")[1].split(" sur")[0], 10);
+        maxIndex = parseInt($(".hourCourses").text().split("sur ")[1], 10);
+        
+
+        for(var j = 0; j < columns.length; j++) {
+            var ride = {};
+            var currElem = $(columns[j]);
+            ride.originalRideId = currElem.attr("headers").split("course")[1];
+            ride.schedules = [];
+            ride.stopOrder = [];
+            rides.push(ride);
+        }
+
+        for(var i = 0; i < rows.length; i++) {
+            var stopId = $(rows[i]).children("td[headers='arret']").attr("id").split("arret")[1];
+            var rowColumns = $(rows[i]).children(".horaire");
+            for(var k = 0; k < rowColumns.length; k++) {
+                if($(rowColumns[k]).text() != "|"){
+                    var schedule = {};
+                    for(var z = 0; z < stops.length; z++) {
+                        if(stops[z].originalId == stopId) {
+                            schedule.stopId = stops[z]._id;
+                            break;
+                        }
+                    }
+                    var scheduleTime = moment($(rowColumns[k]).text(), "HH:mm");
+                    scheduleTime.second(0);
+                    scheduleTime.millisecond(0);
+                    schedule.scheduleDate = new Date(scheduleTime.valueOf());
+                    rides[k].stopOrder.push(schedule.stopId);
+                    rides[k].schedules.push(schedule);
+                }
+            }
+        }
+    }
+    
+
+    callback(rides, currIndex, maxIndex);
+};
+
+
+scrapeBuses = function(depId, arrId, direction, mainCallback) {
     DataProvider.getStop(depId, function(error, depStop) {
         if(depStop) {
             DataProvider.getStop(arrId, function(error, arrStop) {
@@ -152,116 +300,12 @@ getBuses = function(depId, arrId, mainCallback) {
     });
 };
 
+
 parseResults = function(body, depStop, arrStop, parseCallback) {
     var window = jsdom(body).createWindow();
     var $ = require('jquery').create(window);
     var rows = $('#routesynthese tbody').children("tr");
     var results = null;
-
-    var timetableParse = function(body, result, callback) {
-        var subWindow = jsdom(body).createWindow();
-        var $ = require('jquery').create(subWindow);
-        var rows = $("tbody tr[class^='row']");
-        var columnIndex = 0;
-        var nextLink = null;
-        var found = false;
-        for(var i = 0; i < rows.length; i++) {
-            var stopId = $(rows[i]).children("td[headers='arret']").attr("id").split("arret")[1];
-            if(stopId == depStop.originalId) {
-
-                found = true;
-                var columns = $(rows[i]).children(".horaire");
-                var minElem = 0;
-                var maxElem = 0;
-                for(var j = 0; j < columns.length; j++) {
-                    if($(columns[j]).text() != "|"){
-                        minElem = j;
-                        break;
-                    }
-                }
-                for(j = columns.length -1; j >= 0; j--) {
-                    if($(columns[j]).text() != "|"){
-                        maxElem = j;
-                        break;
-                    }
-                }
-                var minTime = Date.parse("01/01/2001 " + $(columns[minElem]).text());
-                var maxTime = Date.parse("01/01/2001 " + $(columns[maxElem]).text());
-                var depTime = Date.parse("01/01/2001 " + result.depHour);
-                if(depTime >= minTime && depTime <= maxTime) {
-                    for(j = 0; j < columns.length; j++) {
-                        if($(columns[j]).text() == result.depHour) {
-                            columnIndex = j;
-                            break;
-                        }
-                    }
-                } else {
-                    if(depTime < minTime) {
-                        //need to navigate back to the previous timetable page
-                        nextLink = rootUrl + "horaires_ligne/" + $(".hourPrev a").attr("href");
-                    } else {
-                        //need to navigate to the next timetable page
-                        nextLink = rootUrl + "horaires_ligne/" + $(".hourNext a").attr("href");
-                    }
-                }
-
-                break;
-            }
-        }
-        if(!nextLink && found) {
-            for(var k = 0; k < rows.length; k++) {
-                var currElem = $($(rows[k]).children(".horaire")[columnIndex]);
-                var dephour = currElem.text();
-                if(dephour !== "|") {
-                    result.rideDepHour = dephour;
-                    result.rideInDayNumber = currElem.attr("headers").split("course")[1];
-                    break;
-                }
-            }
-        }
-
-        callback(nextLink);
-    };
-
-    var detailsParse = function(body, result, callback) {
-        var subWindow = jsdom(body).createWindow();
-        var $ = require('jquery').create(subWindow);
-        var lines = $(".lineRoute img");
-        var linesAr = [];
-        for(var i = 0; i < lines.length; i++) {
-            linesAr.push($(lines[i]).attr("alt"));
-        }
-        result.lineName = linesAr;
-        var lineTimetableLink = rootUrl + $(".lineRoute a").first().attr("href").split("../")[1];
-        var lineid = lineTimetableLink.split("lign_id=")[1].split("&date")[0];
-        var direction = lineTimetableLink.split("sens=")[1];
-        result.lineId = lineid;
-        result.direction = $(".lineRoute .important").text();
-        
-        callback(lineTimetableLink);
-    };
-
-    var searchTimetable = function(lineTimetableLink, result, searchCallback) {
-        async.waterfall([
-            function(callback) {
-                getWebPage(lineTimetableLink, function(body) {
-                    callback(null, body);
-                });
-            },
-            function(body, callback) {
-                if(result.lineName.length == 1) {
-                    timetableParse(body, result, function(otherLink) {
-                        callback(null, true, otherLink);
-                    });
-                } else {
-                    callback(null, false);
-                }
-            },
-        ], function (err, include, otherLink) {
-
-           searchCallback(include, otherLink);
-        });
-    };
 
     if($('.error').length === 0) {
         results = [];
@@ -302,7 +346,7 @@ parseResults = function(body, depStop, arrStop, parseCallback) {
                     });
                 },
                 function(body, callback) {
-                    detailsParse(body, result, function(lineTimetableLink) {
+                    parseDetails(body, result, function(lineTimetableLink) {
                          console.log("Timetable Page: " + lineTimetableLink);
                          callback(null, lineTimetableLink);
                     });
@@ -341,9 +385,121 @@ parseResults = function(body, depStop, arrStop, parseCallback) {
     }
 };
 
+
+parseTimetable = function(depStop, body, result, callback) {
+    var subWindow = jsdom(body).createWindow();
+    var $ = require('jquery').create(subWindow);
+    var rows = $("tbody tr[class^='row']");
+    var columnIndex = 0;
+    var nextLink = null;
+    var found = false;
+    for(var i = 0; i < rows.length; i++) {
+        var stopId = $(rows[i]).children("td[headers='arret']").attr("id").split("arret")[1];
+        if(stopId == depStop.originalId) {
+
+            found = true;
+            var columns = $(rows[i]).children(".horaire");
+            var minElem = 0;
+            var maxElem = 0;
+            for(var j = 0; j < columns.length; j++) {
+                if($(columns[j]).text() != "|"){
+                    minElem = j;
+                    break;
+                }
+            }
+            for(j = columns.length -1; j >= 0; j--) {
+                if($(columns[j]).text() != "|"){
+                    maxElem = j;
+                    break;
+                }
+            }
+            var minTime = Date.parse("01/01/2001 " + $(columns[minElem]).text());
+            var maxTime = Date.parse("01/01/2001 " + $(columns[maxElem]).text());
+            var depTime = Date.parse("01/01/2001 " + result.depHour);
+            if(depTime >= minTime && depTime <= maxTime) {
+                for(j = 0; j < columns.length; j++) {
+                    if($(columns[j]).text() == result.depHour) {
+                        columnIndex = j;
+                        break;
+                    }
+                }
+            } else {
+                if(depTime < minTime) {
+                    //need to navigate back to the previous timetable page
+                    nextLink = rootUrl + "horaires_ligne/" + $(".hourPrev a").attr("href");
+                } else {
+                    //need to navigate to the next timetable page
+                    nextLink = rootUrl + "horaires_ligne/" + $(".hourNext a").attr("href");
+                }
+            }
+
+            break;
+        }
+    }
+    if(!nextLink && found) {
+        for(var k = 0; k < rows.length; k++) {
+            var currElem = $($(rows[k]).children(".horaire")[columnIndex]);
+            var dephour = currElem.text();
+            if(dephour !== "|") {
+                result.rideDepHour = dephour;
+                result.rideInDayNumber = currElem.attr("headers").split("course")[1];
+                break;
+            }
+        }
+    }
+
+    callback(nextLink);
+};
+
+parseDetails = function(body, result, callback) {
+    var subWindow = jsdom(body).createWindow();
+    var $ = require('jquery').create(subWindow);
+    var lines = $(".lineRoute img");
+    var linesAr = [];
+    for(var i = 0; i < lines.length; i++) {
+        linesAr.push($(lines[i]).attr("alt"));
+    }
+    result.lineName = linesAr;
+    var lineTimetableLink = rootUrl + $(".lineRoute a").first().attr("href").split("../")[1];
+    var lineid = lineTimetableLink.split("lign_id=")[1].split("&date")[0];
+    var direction = lineTimetableLink.split("sens=")[1];
+    result.lineId = lineid;
+    result.direction = $(".lineRoute .important").text();
+    
+    callback(lineTimetableLink);
+};
+
+searchTimetable = function(lineTimetableLink, result, searchCallback) {
+    async.waterfall([
+        function(callback) {
+            getWebPage(lineTimetableLink, function(body) {
+                callback(null, body);
+            });
+        },
+        function(body, callback) {
+            if(result.lineName.length == 1) {
+                parseTimetable(depStop, body, result, function(otherLink) {
+                    callback(null, true, otherLink);
+                });
+            } else {
+                callback(null, false);
+            }
+        },
+    ], function (err, include, otherLink) {
+
+       searchCallback(include, otherLink);
+    });
+};
+
+
+
+
+// ROUTER
+// ======
+
 server.get('/api/reset/:id/:code', function(req, res) {
     if(req.params.id == "domenico" && req.params.code == 151086) {
-        DataProvider.reset(function() { 
+        DataProvider.reset(function() {
             return res.send("done!");
         });
     } else {
@@ -365,9 +521,9 @@ server.get('/api/stops', function(req, res) {
 });
 
 server.get('/api/search', function(req, res) {
-    getBuses(req.query.depStop, req.query.arrStop, function(results) {
+    getBuses(req.query.depStop, req.query.arrStop, req.query.line, req.query.direction, function(results) {
         console.log("returning " + (results ? results.length : 0) + " results");
-        console.log(results);
+        //console.log(results);
         return res.send(results);
     });
 });

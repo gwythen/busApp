@@ -1,7 +1,7 @@
 {
-  "name": "Mapulia",
-  "title": "An App to discover Puglia",
-  "description": "This is an App to discover Puglia",
+  "name": "busapp",
+  "title": "Never miss the bus again",
+  "description": "This is an App to chekc the bus info",
   "version": "1.0.0",
   "homepage": "",
   "author": {
@@ -11,17 +11,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:brettjonesdev/MRB-Lite.git"
+    "url": "git@github.com:gwythen/busApp.git"
   },
-  "bugs": {
-    "url": "https://github.com/brettjonesdev/MRB-Lite/issues"
-  },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "https://github.com/brettjonesdev/MRB-Lite/blob/master/LICENSE-MIT"
-    }
-  ],
   "devDependencies": {
     "express": "3.x",
     "grunt-contrib-compass": "~0.3.0",
@@ -33,10 +24,13 @@
     "jsdom": "*",
     "request": "*",
     "jquery": "~1.8.3",
-    "jade" : "*",
-    "async" : "*",
-    "mongoose":"*"
+    "jade": "*",
+    "async": "*",
+    "mongoose": "*",
+    "moment": "*"
   },
   "main": "./server/server",
-  "keywords": ["BusApp"]
+  "keywords": [
+    "BusApp"
+  ]
 }
