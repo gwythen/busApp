@@ -13,8 +13,11 @@ DataProvider = function(host, port) {
   this.db = mongoose.connection;
   this.db.on('error', console.error.bind(console, 'connection error:'));
   this.db.once('open', function callback () {
-    schemas.Line = require('./models/Line.js');
+    schemas.DirectedRoute = require('./models/DirectedRoute.js');
     schemas.Stop = require('./models/Stop.js');
+    schemas.Itinerary = require('./models/Itinerary.js');
+    schemas.Ride = require('./models/Ride.js');
+    schemas.Record = require('./models/Record.js');
     schemas.Observation = require('./models/Observation.js');
     console.log("connected");
   });
@@ -26,18 +29,45 @@ DataProvider.prototype.reset = function(mainCallback) {
     var twothirty = {};
 
     async.waterfall([
-      //Reset Lines
       function(wfcallback) {
-        schemas.Line.remove({}, function(err) {
-           console.log('lines removed');
-           wfcallback(err);
-        });
-      },
-      //Reset Stops
-      function(wfcallback) {
-        schemas.Stop.remove({}, function(err) {
-           console.log('stops removed');
-           wfcallback(err);
+        async.parallel([
+            //Reset Lines
+            function(pcallback) {
+              schemas.DirectedRoute.remove({}, function(err) {
+                 console.log('lines removed');
+                 pcallback(err);
+              });
+            },
+            //Reset Stops
+            function(pcallback) {
+              schemas.Stop.remove({}, function(err) {
+                 console.log('stops removed');
+                 pcallback(err);
+              });
+            },
+            //Reset Itinerary
+            function(pcallback) {
+              schemas.Itinerary.remove({}, function(err) {
+                 console.log('itinerary removed');
+                 pcallback(err);
+              });
+            },
+            //Reset Ride
+            function(pcallback) {
+              schemas.Ride.remove({}, function(err) {
+                 console.log('rides removed');
+                 pcallback(err);
+              });
+            },
+            //Reset Stops
+            function(pcallback) {
+              schemas.Stop.remove({}, function(err) {
+                 console.log('stops removed');
+                 pcallback(err);
+              });
+            },
+        ], function(err) {
+            wfcallback(null);
         });
       },
       //Create Stops
@@ -45,12 +75,18 @@ DataProvider.prototype.reset = function(mainCallback) {
         allOrderedStops[1] = {
           direction: "toSophia",
           originalDirectionId: 1,
-          allStops: []
+          lineName: "230",
+          lineOriginalId: 468,
+          allStops: [],
+          itineraries: []
         };
         allOrderedStops[2] = {
           direction: "fromSophia",
           originalDirectionId: 2,
-          allStops: []
+          lineName: "230",
+          lineOriginalId: 468,
+          allStops: [],
+          itineraries: []
         };
         async.each(stopsOrders, function(stopsOrder, loopCallback) {
           var currLine = stopsOrder.directedline_id;
@@ -69,14 +105,9 @@ DataProvider.prototype.reset = function(mainCallback) {
             wfcallback(err);
         });
       },
-      //Create lines
+      //Create line to Sophia
       function(wfcallback){
-        twothirty = new schemas.Line({
-          lineOriginalId: 468,
-          name: "230",
-          directedRoutes:[allOrderedStops[1], allOrderedStops[2]]
-        });
-        schemas.Line.create(twothirty, function (err) {
+        schemas.DirectedRoute.create(allOrderedStops[1], function (err) {
             if (err) {
               console.log("error" + err);
             } else {
@@ -84,12 +115,23 @@ DataProvider.prototype.reset = function(mainCallback) {
             }
             wfcallback(err);
         });
-    }], function (err) {
+      },
+      //Create line from Sophia
+      function(wfcallback){
+        schemas.DirectedRoute.create(allOrderedStops[2], function (err) {
+            if (err) {
+              console.log("error" + err);
+            } else {
+              console.log("line created");
+            }
+            wfcallback(err);
+        });
+      }
+    ], function (err) {
       if(err) {
         console.log("error " + err);
-      } else {
-        mainCallback();
       }
+      mainCallback();
     });
 };
 
@@ -108,15 +150,15 @@ DataProvider.prototype.getStop = function(stopId, callback) {
 };
 
 DataProvider.prototype.getAllOrderedStops = function(line, callback) {
-    schemas.Line.findOne({name: line}).populate('directedRoutes.allStops').exec(
-      function (err, result) {
+    schemas.DirectedRoute.find({lineName: line}).populate('allStops').exec(
+      function (err, results) {
         var allOrderedStops = {};
         allOrderedStops[1] = [];
         allOrderedStops[2] = [];
-        if(result) {
-          for(var i = 0; i < result.directedRoutes.length; i++) {
-            var currLine = result.directedRoutes[i].originalDirectionId;
-            allOrderedStops[currLine] = result.directedRoutes[i].allStops;
+        if(results) {
+          for(var i = 0; i < results.length; i++) {
+            var currLine = results[i].originalDirectionId;
+            allOrderedStops[currLine] = results[i].allStops;
           }
         }
         callback(err, allOrderedStops);
@@ -124,45 +166,110 @@ DataProvider.prototype.getAllOrderedStops = function(line, callback) {
     );
 };
 
-DataProvider.prototype.getLine = function(line, callback) {
-  schemas.Line.findOne({name: line}).populate('directedRoutes.allStops').exec(
+DataProvider.prototype.getDirectedRoute = function(line, direction, callback) {
+  schemas.DirectedRoute.findOne({lineName: line, direction: direction}).populate('allStops', 'itineraries').exec(
       function (err, result) {
-        callback(err, result);
+        var options = {
+          path: 'itineraries.rides',
+          model: 'Ride'
+        };
+        console.log(result);
+        schemas.DirectedRoute.populate(result, options, function (err, routes) {
+          callback(err, result);
+        });
       }
   );
 };
 
 DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
-  var date = new Date();
-  var today = moment();
-  today.second(0);
-  today.millisecond(0);
-  today.minute(today.minute() - 10);
-  var tomorrow = today.add('days', 1);
+  var results = {};
+  var today = new Date();
+  var safeMinutes = today.getMinutes() - 10;
+  if(safeMinutes < 0) {
+    safeMinutes = 0;
+  }
+  today.setHours(0);
+  today.setMinutes(0);
+  today.setSeconds(0);
+  today.setMilliseconds(0);
+  var scheduleTime = new Date(1970, 0, 1, today.getHours(), safeMinutes, 0, 0);
   console.log(direction);
+  
+  async.waterfall([
+      function(wfcallback) {
+          schemas.DirectedRoute.find({direction: direction}, function(err, route) {
+              wfcallback(null, route);
+          });
+      },
+      function(route, wfcallback) {
+        schemas.Record.find({direction: direction, date: today}).populate('rides').exec(
+          function(err, record) {          
+            results.line = route.lineName;
+            results.direction = route.direction;
+            results.schedules = [];
+            if(record) {
+              wfcallback(null, record.rides);
+            } else {
+              var query = schemas.Ride.find({directedRoute: route._id})
+                  .where('schedules').elemMatch(function (elem) {
+                    elem.where('stop', depId);
+                    elem.where('scheduleTime').gte(scheduleTime);
+                  })
+                  .where('schedules').elemMatch(function (elem) {
+                    elem.where('stop', arrId);
+                    elem.where('scheduleTime').gt(scheduleTime);
+                  });
 
-  var query = schemas.Line.find({})
-    .where('directedRoutes.direction', direction)
-    .all('directedRoutes.allStops', [depId, arrId])
-    .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
-      elem.where('stop', depId);
-      elem.where('scheduleDate').gte(today.valueOf()).lte(tomorrow.valueOf());
-    })
-    .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
-      elem.where('stop', arrId);
-      elem.where('scheduleDate').gt(today.valueOf()).lte(tomorrow.valueOf());
-    });
-
-  query.exec(function(err, result) {
-    console.log(result);
-    callback(err, result);
+              query.exec(function(err, result) {
+                  console.log(result);
+                  console.log(route);
+                  wfcallback(err, results);
+              });
+            }
+          }
+        )
+      }
+  ], function (err, rides) {
+      for(var i = 0; i < rides; i++) {
+        var result = {};
+        var depfound = false;
+        for (var j = 0; j < ride[i].schedules.length; j++) {   
+          var currSchedule = ride[i].schedules[j];
+          if(!depfound) {
+            if(currSchedule.stop = depId && currSchedule.scheduleTime >= scheduleTime) {
+              result.dep = currSchedule.scheduleTime;
+              depfound = true;
+            }
+          } else {
+            if(currSchedule.stop = arrId && currSchedule.scheduleTime > scheduleTime) {
+              result.arr = currSchedule.scheduleTime;
+              results.schedules.push(result);
+              break;
+            }
+          }
+          
+        }
+      }
+      callback(results);
   });
+
+  // var query = schemas.Line.find({})
+  //   .where('directedRoutes.direction', direction)
+  //   .all('directedRoutes.allStops', [depId, arrId])
+  //   .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
+  //     elem.where('stop', depId);
+  //     elem.where('scheduleDate').gte(today.valueOf()).lte(tomorrow.valueOf());
+  //   })
+  //   .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
+  //     elem.where('stop', arrId);
+  //     elem.where('scheduleDate').gt(today.valueOf()).lte(tomorrow.valueOf());
+  //   });
 };
 
-DataProvider.prototype.setLine = function(update, callback) {
-  schemas.Line.findOne({_id: update._id}, function(err, line) {
+DataProvider.prototype.setDirectedRoute = function(update, callback) {
+  schemas.DirectedRoute.findOne({_id: update._id}, function(err, line) {
     if(!err) {
-        line.directedRoutes = update.directedRoutes;
+        line = update;
         line.save(function(err) {
           callback(err);
         });

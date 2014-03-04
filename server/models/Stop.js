@@ -1,4 +1,4 @@
-// Physical Stop Model
+// Stop Model
  
 var mongoose = require('mongoose'),
 	Schema = mongoose.Schema;

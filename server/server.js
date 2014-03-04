@@ -103,7 +103,7 @@ getWebPage = function(url, callback) {
 
 getBuses = function(depId, arrId, line, direction, mainCallback) {
     DataProvider.getBuses(depId, arrId, direction, function(error, results) {
-        if(results.length > 0) {
+        if(results) {
            mainCallback(results);
         } else {
             //scrapeBuses(depId, arrId, direction, mainCallback);
@@ -113,19 +113,10 @@ getBuses = function(depId, arrId, line, direction, mainCallback) {
 };
 
 scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
-    DataProvider.getLine(line, function(error, result) {
-        var lineId = result.lineOriginalId;
-        var directedRoute = "";
-        var dirIndex = 0;
-        //var today = moment();
+    DataProvider.getDirectedRoute(line, direction, function(error, result) {
+        var directedRoute = result;
         var today = moment().add('days', 1);
-        for(var i = 0; i < result.directedRoutes.length; i++) {
-            if(result.directedRoutes[i].direction == direction) {
-                directedRoute = result.directedRoutes[i];
-                dirIndex = i;
-            }
-        }
-        var url = "http://www.ceparou06.fr/horaires_ligne/index.asp?rub_code=6&thm_id=0&lign_id=" + lineId + "&sens=" + directedRoute.originalDirectionId + "&date=" + today.format("DD") + "%2F" + today.format("MM") + "%2F" + today.format("YYYY") + "&index=";
+        var url = "http://www.ceparou06.fr/horaires_ligne/index.asp?rub_code=6&thm_id=0&lign_id=" + directedRoute.lineOriginalId + "&sens=" + directedRoute.originalDirectionId + "&date=" + today.format("DD") + "%2F" + today.format("MM") + "%2F" + today.format("YYYY") + "&index=";
         console.log(url);
         var currIndex = 1;
         var maxIndex = 2;
@@ -153,48 +144,95 @@ scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
             function () { return currIndex < maxIndex; },
             function (err) {
                 if(totalRides.length > 0) {
-                    var itineraries = directedRoute.itineraries;
+                    //TODO insert for an async loop and save a record
                     for(var i = 0; i < totalRides.length; i++) {
-                        var currRide = totalRides[i];
-                        var itin = null;
-                        for(var j = 0; j < itineraries.length; j++) {
-                            itin = j;
-                            var currItin = itineraries[j];
-                            if(currItin.stopOrder.length == currRide.stopOrder.length) {
-                                for(var k = 0; k < currItin.stopOrder.length; k++) {
-                                    if(currItin.stopOrder[k] != currRide.stopOrder[k]) {
-                                        itin = null;
-                                        break;
-                                    }
+                        async.waterfall([
+                            function(callback) {
+                                checkRideExistence(totalRides, function(itin, ridefound, currRide){
+                                    callback(null, itin, ridefound, currRide);
+                                })  
+                            },
+                            function(itin, ridefound, currRide, callback) {
+                                if(!itin || !ridefound) {
+                                    var stopOrder = currRide.stopOrder;
+                                    delete currRide.stopOrder;
+                                    //First create a new ride
+                                    DataProvider.saveRide(currRide, function(error, currRide) {
+                                        console.log("ride saved to the database");
+                                        if(!itin) {
+                                            //If not existing, create a new itinerary
+                                            var itinerary = {};
+                                            itinerary.stopOrder = stopOrder;
+                                            itinerary.rides = [];
+                                            //Then push the id to the itinerary
+                                            itinerary.rides.push(ride._id);
+                                            //Then save the itinerary
+                                            DataProvider.saveItinerary(itinerary, function(error, itin) {
+                                                //Then push the id to the directedroute
+                                                console.log("itinerary saved to the database");
+                                                directedRoute.itineraries.push(itin._id);
+                                                callback(null, directedRoute);
+                                            })
+                                        } else {
+                                            directedRoute.itineraries[itin].rides.push(ride._id);
+                                            callback(null, directedRoute);
+                                        }
+                                    })
                                 }
-                            } else {
-                                itin = null;
                             }
-                        }
-                        if(itin) {
-                            itineraries[itin].rides.push(currRide);
-                        } else {
-                            var itinerary = {};
-                            itinerary.stopOrder = currRide.stopOrder;
-                            itinerary.rides = [];
-                            delete currRide.stopOrder;
-                            itinerary.rides.push(currRide);
-                            itineraries.push(itinerary);
-                        }
+                        ], function (err, route) {
+                            DataProvider.setDirectedRoute(directedRoute, function(error) {
+                                console.log("route saved to the database");
+                            });
+                            mainCallback(totalRides);
+                        });
                     }
-                    directedRoute.itineraries = itineraries;
-                    result.directedRoutes[dirIndex] = directedRoute;
-
-                    DataProvider.setLine(result, function(error) {
-                        console.log("data saved to the database");
-                    });
+                }  else {
+                    mainCallback(null);
                 }
-                    
-                mainCallback(totalRides);
-            }
+            } 
         );
     });
 };
+
+checkRideExistence = function(currRide, callback){   
+    var currRide = totalRides[i];
+    var itin = null;
+    for(var j = 0; j < directedRoute.itineraries.length; j++) {
+        itin = j;
+        var currItin = directedRoute.itineraries[j];
+        if(currItin.stopOrder.length == currRide.stopOrder.length) {
+            for(var k = 0; k < currItin.stopOrder.length; k++) {
+                if(currItin.stopOrder[k] != currRide.stopOrder[k]) {
+                    itin = null;
+                    break;
+                }
+            }
+        } else {
+            itin = null;
+        }
+    }
+    if(itin) {
+        var ridefound = true;
+        //check if the itinerary already has this ride
+        for(var z = 0; z < directedRoute[itin].rides; z++) {
+            var currsched = currRide.schedules;
+            var ridesched = directedRoute[itin].rides[z].schedules;
+            if(currsched.length == ridesched) {
+                for(var x = 0; x < ridesched.length; x++) {
+                    if(ridesched[x].scheduleDate.valueOf() != currsched[x].scheduleDate.valueOf()) {
+                        ridefound = false;
+                    }
+                }
+            } else {
+                ridefound = false;
+                break;
+            }
+            
+        }
+    }
+    callback(itin, ridefound);
+}
 
 parseTimetable2 = function(body, stops, callback) {
     var subWindow = jsdom(body).createWindow();
@@ -213,7 +251,7 @@ parseTimetable2 = function(body, stops, callback) {
         for(var j = 0; j < columns.length; j++) {
             var ride = {};
             var currElem = $(columns[j]);
-            ride.originalRideId = currElem.attr("headers").split("course")[1];
+            //ride.originalRideId = currElem.attr("headers").split("course")[1];
             ride.schedules = [];
             ride.stopOrder = [];
             rides.push(ride);
@@ -231,9 +269,7 @@ parseTimetable2 = function(body, stops, callback) {
                             break;
                         }
                     }
-                    var scheduleTime = moment($(rowColumns[k]).text(), "HH:mm");
-                    scheduleTime.second(0);
-                    scheduleTime.millisecond(0);
+                    var scheduleTime = moment("1970/01/01 " + $(rowColumns[k]).text() + "00:000", " YYYY/MM/DD HH:mm:ss:SSS");
                     schedule.scheduleDate = new Date(scheduleTime.valueOf());
                     rides[k].stopOrder.push(schedule.stopId);
                     rides[k].schedules.push(schedule);
