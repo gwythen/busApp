@@ -122,6 +122,20 @@ scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
         var currIndex = 1;
         var maxIndex = 2;
         var totalRides = [];
+
+        var record = {};
+        record.date = new Date();
+        record.date.setHours(0);
+        record.date.setMinutes(0);
+        record.date.setSeconds(0);
+        record.date.setMilliseconds(0);
+        record.directedRoute = directedRoute._id;
+        record.rides = [];
+
+        var allItineraries = [];
+        for(var i = 0; i < directedRoute.itineraries.length; i++) {
+            allItineraries.push(directedRoute.itineraries[i].toObject());
+        }
         async.doWhilst(
             function (docallback) {
                 async.waterfall([
@@ -137,62 +151,71 @@ scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
                     }
                 ], function (err, rides, curr, max) {
                     totalRides.push.apply(totalRides, rides);
+                    if(curr == max) {
+                        curr = curr + 1;
+                    }
                     currIndex = curr;
                     maxIndex = max;
                     docallback();
                 });
             },
-            function () { return currIndex < maxIndex; },
+            function () { return currIndex <= maxIndex; },
             function (err) {
                 if(totalRides.length > 0) {
                     //TODO insert for an async loop and save a record
-                    async.each(totalRides, function(currRide, loopCallback) {
+                    async.eachSeries(totalRides, function(currRide, loopCallback) {
                         async.waterfall([
                             function(callback) {
-                                checkRideExistence(directedRoute, currRide, function(itin, ridefound){
+                                checkRideExistence(allItineraries, currRide, function(itin, ridefound){
                                     callback(null, itin, ridefound);
                                 });
                             },
                             function(itin, ridefound, callback) {
-                                if(!itin || !ridefound) {
+                                console.log("itin " + itin);
+                                console.log("ridefound " + ridefound);
+                                if(itin == null || !ridefound) {
                                     //First create a new ride
-                                    console.log(currRide);
                                     currRide.directedRoute = directedRoute._id;
                                     DataProvider.setRide(currRide, function(error, ride) {
                                         if(ride) {
                                             console.log("ride saved to the database");
-                                            currRide.id = ride._id;
+                                            currRide._id = ride._id;
                                             //If not existing, create a new itinerary
-                                            if(!itin) {
+                                            if(itin == null) {
                                                 var itinerary = {};
                                                 itinerary.stopOrder = currRide.stopOrder;
                                                 itinerary.rides = [];
                                                 //Then push the id to the itinerary
-                                                itinerary.rides.push(ride._id);
+                                                itinerary.rides.push(currRide);
                                                 //Then save the itinerary
-                                                console.log(itinerary);
                                                 DataProvider.setItinerary(itinerary, function(error, dbitin) {
                                                     if(dbitin) {
                                                         //Then push the id to the directedroute
                                                         console.log("itinerary saved to the database");
-                                                        directedRoute.itineraries.push(dbitin._id);
+                                                        itinerary._id = dbitin._id;
+                                                        directedRoute.itineraries.push(itinerary);
+                                                        allItineraries.push(itinerary);
                                                     } else {
-                                                       console.log("Erro: itinerary not saved");
+                                                       console.log("Error: itinerary not saved");
                                                     }
-                                                    callback(null, directedRoute);
+                                                    callback(null);
                                                 });
                                             //Otherwise add directly the ride to the corresponding itinerary
                                             } else {
-                                                directedRoute.itineraries[itin].rides.push(ride._id);
-                                                callback(null, directedRoute);
+                                                directedRoute.itineraries[itin].rides.push(currRide);
+                                                allItineraries[itin].rides.push(currRide);
+                                                callback(null);
                                             }
                                         } else {
-                                            callback(null, directedRoute);
+                                            callback(null);
                                         }
                                     });
+                                } else {
+                                    callback(null);
                                 }
                             }
-                        ], function (err, route) {
+                        ], function (err) {
+                            record.rides.push(currRide._id);
                             loopCallback();
                         });
                     }, function(err) {
@@ -201,17 +224,6 @@ scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
                             console.log("route saved to the database");
                         });
                         //And store a record of the rides for the day
-                        var record = {};
-                        record.date = new Date();
-                        record.date.setHours(0);
-                        record.date.setMinutes(0);
-                        record.date.setSeconds(0);
-                        record.date.setMilliseconds(0);
-                        record.directedRoute = directedRoute._id;
-                        record.rides = [];
-                        for(var i = 0; i < totalRides.length; i++) {
-                            record.rides.push(totalRides[i].id);
-                        }
                         DataProvider.setRecord(record, function(error) {
                             console.log("record saved to the database");
                         });
@@ -225,42 +237,58 @@ scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
     });
 };
 
-checkRideExistence = function(directedRoute, currRide, callback){
-    var ridefound = true;
+checkRideExistence = function(allItineraries, currRide, callback){
+    var ridefound = false;
     var itin = null;
-    for(var j = 0; j < directedRoute.itineraries.length; j++) {
-        itin = j;
-
-        var currItin = directedRoute.itineraries[j];
-        
+    console.log("length " + allItineraries.length);
+    for(var j = 0; j < allItineraries.length; j++) {
+        var currItin = allItineraries[j];
         if(currItin.stopOrder.length == currRide.stopOrder.length) {
+            var allstop = true;
             for(var k = 0; k < currItin.stopOrder.length; k++) {
-                if(currItin.stopOrder[k] != currRide.stopOrder[k]) {
-                    itin = null;
+                if(currItin.stopOrder[k].toString() != currRide.stopOrder[k].toString()) {
+                    console.log("different stop");
+                    allstop = false;
                     break;
                 }
+            }
+            if(allstop) {
+                itin = j;
+                break;
             }
         } else {
             itin = null;
         }
     }
-    if(itin) {
-        ridefound = true;
+    if(itin != null) {
+        console.log("itinerary found");
         //check if the itinerary already has this ride
-        for(var z = 0; z < directedRoute[itin].rides; z++) {
+        for(var z = 0; z < allItineraries[itin].rides.length; z++) {
             var currsched = currRide.schedules;
-            var ridesched = directedRoute[itin].rides[z].schedules;
-            if(currsched.length == ridesched) {
+            var ridesched = allItineraries[itin].rides[z].schedules;
+            if(currsched.length == ridesched.length) {
+                var allsched = true;
                 for(var x = 0; x < ridesched.length; x++) {
-                    if(ridesched[x].scheduleDate.valueOf() != currsched[x].scheduleDate.valueOf()) {
-                        ridefound = false;
-                    }
+                        // console.log("current");
+                        // console.log(ridesched[x].scheduleTime);
+                        // console.log("stored");
+                        // console.log(currsched[x].scheduleTime);
+                        //console.log(currsched);
+                    if(ridesched[x].scheduleTime.getTime() != currsched[x].scheduleTime.getTime()) {
+                        console.log("different schedule");
+                        allsched = false;
+                        break;
+                    }   
+                }
+                if(allsched) {
+                    ridefound = true;
+                    currRide._id = allItineraries[itin].rides[z]._id;
+                    break;
                 }
             } else {
+                console.log("different schedule length");
                 ridefound = false;
-                break;
             }
-            
         }
     }
     callback(itin, ridefound);
@@ -302,8 +330,7 @@ parseTimetable2 = function(body, stops, callback) {
                 }
             }
             if(!found) {
-                console.log("strange stop");
-                console.log(stopId);
+               //TODO: what happens in this case?
             }
             var rowColumns = $(rows[i]).children(".horaire");
             for(var k = 0; k < rowColumns.length; k++) {
@@ -312,7 +339,7 @@ parseTimetable2 = function(body, stops, callback) {
                     schedule.stop = currStopDbId;
                     var time = $(rowColumns[k]).text().split(":");
                     var scheduleTime = new Date(1970, 0, 1, time[0], time[1], 0, 0);
-                    schedule.scheduleDate = scheduleTime;
+                    schedule.scheduleTime = scheduleTime;
                     rides[k].stopOrder.push(schedule.stop);
                     rides[k].schedules.push(schedule);
                 }
@@ -593,7 +620,6 @@ server.get('/', function(req, res) {
 
 server.get('/api/stops', function(req, res) {
     server.getStops(function(results) {
-        console.log("results" + results);
         return res.send(results);
     });
 });

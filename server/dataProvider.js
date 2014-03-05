@@ -226,8 +226,8 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
                   });
 
               query.exec(function(err, result) {
-                  console.log(result);
-                  console.log(route);
+                  // console.log(result);
+                  // console.log(route);
                   wfcallback(err, results);
               });
             }
@@ -291,7 +291,6 @@ DataProvider.prototype.setRecord = function(record, callback) {
           } else {
             console.log("record created");
           }
-          console.log(newrec)
           callback(err);
       });
     }
@@ -299,11 +298,7 @@ DataProvider.prototype.setRecord = function(record, callback) {
 };
 
 DataProvider.prototype.setRide = function(ride, callback) {
-  var newride = {};
-  newride.directedRoute = ride.directedRoute;
-  newride.schedules = ride.schedules;
-  console.log(ride);
-  schemas.Ride.create(newride, function (err, dbride) {
+  schemas.Ride.create(ride, function (err, dbride) {
       if (err) {
         console.log("error" + err);
       } else {
