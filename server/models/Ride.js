@@ -1,7 +1,7 @@
 // Ride Model
  
-var mongoose = require('mongoose')
-   ,Schema = mongoose.Schema;
+var mongoose = require('mongoose'),
+    Schema = mongoose.Schema;
  
 var rideSchema = new Schema({
     directedRoute: {

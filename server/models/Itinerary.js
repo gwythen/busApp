@@ -1,7 +1,7 @@
 // Itinerary Model
  
-var mongoose = require('mongoose')
-   ,Schema = mongoose.Schema;
+var mongoose = require('mongoose'),
+	Schema = mongoose.Schema;
  
 var itinerarySchema = new Schema({
     stopOrder: [{

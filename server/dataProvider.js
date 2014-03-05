@@ -88,16 +88,15 @@ DataProvider.prototype.reset = function(mainCallback) {
           allStops: [],
           itineraries: []
         };
-        async.each(stopsOrders, function(stopsOrder, loopCallback) {
+        async.eachSeries(stopsOrders, function(stopsOrder, loopCallback) {
           var currLine = stopsOrder.directedline_id;
           var newStop = stops[stopsOrder.stop_id - 1];
-          console.log(newStop);
           schemas.Stop.create(newStop, function (err, stop) {
               if (err) {
                 console.log("error" + err);
               } else {
-                allOrderedStops[currLine].allStops.push(stop);
-                console.log("stop created");
+                allOrderedStops[currLine].allStops.push(stop._id);
+                console.log("stop created " + stop.stopName);
               }
               loopCallback(err);
           });
@@ -167,13 +166,12 @@ DataProvider.prototype.getAllOrderedStops = function(line, callback) {
 };
 
 DataProvider.prototype.getDirectedRoute = function(line, direction, callback) {
-  schemas.DirectedRoute.findOne({lineName: line, direction: direction}).populate('allStops', 'itineraries').exec(
+  schemas.DirectedRoute.findOne({lineName: line, direction: direction}).populate([{path:'allStops'},{path:'itinerary'}]).exec(
       function (err, result) {
         var options = {
           path: 'itineraries.rides',
           model: 'Ride'
         };
-        console.log(result);
         schemas.DirectedRoute.populate(result, options, function (err, routes) {
           callback(err, result);
         });
@@ -203,7 +201,7 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
       },
       function(route, wfcallback) {
         schemas.Record.find({direction: direction, date: today}).populate('rides').exec(
-          function(err, record) {          
+          function(err, record) {
             results.line = route.lineName;
             results.direction = route.direction;
             results.schedules = [];
@@ -227,21 +225,21 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
               });
             }
           }
-        )
+        );
       }
   ], function (err, rides) {
       for(var i = 0; i < rides; i++) {
         var result = {};
         var depfound = false;
-        for (var j = 0; j < ride[i].schedules.length; j++) {   
+        for (var j = 0; j < ride[i].schedules.length; j++) {
           var currSchedule = ride[i].schedules[j];
           if(!depfound) {
-            if(currSchedule.stop = depId && currSchedule.scheduleTime >= scheduleTime) {
+            if(currSchedule.stop == depId && currSchedule.scheduleTime >= scheduleTime) {
               result.dep = currSchedule.scheduleTime;
               depfound = true;
             }
           } else {
-            if(currSchedule.stop = arrId && currSchedule.scheduleTime > scheduleTime) {
+            if(currSchedule.stop == arrId && currSchedule.scheduleTime > scheduleTime) {
               result.arr = currSchedule.scheduleTime;
               results.schedules.push(result);
               break;
@@ -277,5 +275,45 @@ DataProvider.prototype.setDirectedRoute = function(update, callback) {
   });
 };
 
+DataProvider.prototype.setRecord = function(record, callback) {
+  schemas.Record.findOne({date: record.date, directedRoute: record.directedRoute}, function(err, rec) {
+    if(!err && !rec) {
+      schemas.Record.create(record, function (err) {
+          if (err) {
+            console.log("error" + err);
+          } else {
+            console.log("record created");
+          }
+          callback(err);
+      });
+    }
+  });
+};
+
+DataProvider.prototype.setRide = function(ride, callback) {
+  var newride = {};
+  newride.directedRoute = ride.directedRoute;
+  newride.schedules = ride.schedules;
+  console.log(ride);
+  schemas.Ride.create(newride, function (err, dbride) {
+      if (err) {
+        console.log("error" + err);
+      } else {
+        console.log("ride created");
+      }
+      callback(err, dbride);
+  });
+};
+
+DataProvider.prototype.setItinerary = function(itinerary, callback) {
+  schemas.Itinerary.create(itinerary, function (err, dbitin) {
+      if (err) {
+        console.log("error" + err);
+      } else {
+        console.log("itinerary created");
+      }
+      callback(err, dbitin);
+  });
+};
 
 exports.DataProvider = DataProvider;
