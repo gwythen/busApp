@@ -5,7 +5,7 @@ var mongoose = require('mongoose')
  
 var itinerarySchema = new Schema({
 	date: Date,
-    DirectedRoute: {
+    directedRoute: {
 		type: Schema.Types.ObjectId,
 		ref: 'DirectedRoute'
 	},

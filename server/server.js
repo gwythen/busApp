@@ -116,7 +116,7 @@ getBuses = function(depId, arrId, line, direction, mainCallback) {
 scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
     DataProvider.getDirectedRoute(line, direction, function(error, result) {
         var directedRoute = result;
-        var today = moment().add('days', 1);
+        var today = moment();
         var url = "http://www.ceparou06.fr/horaires_ligne/index.asp?rub_code=6&thm_id=0&lign_id=" + directedRoute.lineOriginalId + "&sens=" + directedRoute.originalDirectionId + "&date=" + today.format("DD") + "%2F" + today.format("MM") + "%2F" + today.format("YYYY") + "&index=";
         console.log(url);
         var currIndex = 1;
@@ -149,7 +149,7 @@ scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
                     async.each(totalRides, function(currRide, loopCallback) {
                         async.waterfall([
                             function(callback) {
-                                checkRideExistence(directedRoute, totalRides, function(itin, ridefound, currRide){
+                                checkRideExistence(directedRoute, currRide, function(itin, ridefound){
                                     callback(null, itin, ridefound);
                                 });
                             },
@@ -230,7 +230,9 @@ checkRideExistence = function(directedRoute, currRide, callback){
     var itin = null;
     for(var j = 0; j < directedRoute.itineraries.length; j++) {
         itin = j;
+
         var currItin = directedRoute.itineraries[j];
+        
         if(currItin.stopOrder.length == currRide.stopOrder.length) {
             for(var k = 0; k < currItin.stopOrder.length; k++) {
                 if(currItin.stopOrder[k] != currRide.stopOrder[k]) {

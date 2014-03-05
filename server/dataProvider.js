@@ -66,6 +66,13 @@ DataProvider.prototype.reset = function(mainCallback) {
                  pcallback(err);
               });
             },
+            //Reset Records
+            function(pcallback) {
+              schemas.Record.remove({}, function(err) {
+                 console.log('records removed');
+                 pcallback(err);
+              });
+            }
         ], function(err) {
             wfcallback(null);
         });
@@ -166,7 +173,7 @@ DataProvider.prototype.getAllOrderedStops = function(line, callback) {
 };
 
 DataProvider.prototype.getDirectedRoute = function(line, direction, callback) {
-  schemas.DirectedRoute.findOne({lineName: line, direction: direction}).populate([{path:'allStops'},{path:'itinerary'}]).exec(
+  schemas.DirectedRoute.findOne({lineName: line, direction: direction}).populate([{path:'allStops'},{path:'itineraries'}]).exec(
       function (err, result) {
         var options = {
           path: 'itineraries.rides',
@@ -278,12 +285,13 @@ DataProvider.prototype.setDirectedRoute = function(update, callback) {
 DataProvider.prototype.setRecord = function(record, callback) {
   schemas.Record.findOne({date: record.date, directedRoute: record.directedRoute}, function(err, rec) {
     if(!err && !rec) {
-      schemas.Record.create(record, function (err) {
+      schemas.Record.create(record, function (err, newrec) {
           if (err) {
             console.log("error" + err);
           } else {
             console.log("record created");
           }
+          console.log(newrec)
           callback(err);
       });
     }
