@@ -173,39 +173,40 @@ scrapeBuses2 = function(depId, arrId, line, direction, mainCallback) {
                             function(itin, ridefound, callback) {
                                 console.log("itin " + itin);
                                 console.log("ridefound " + ridefound);
-                                if(itin == null || !ridefound) {
+                                if(itin === null || !ridefound) {
                                     //First create a new ride
                                     currRide.directedRoute = directedRoute._id;
+                                    var itinerary = {};
                                     DataProvider.setRide(currRide, function(error, ride) {
                                         if(ride) {
                                             console.log("ride saved to the database");
                                             currRide._id = ride._id;
                                             //If not existing, create a new itinerary
-                                            if(itin == null) {
-                                                var itinerary = {};
+                                            if(itin === null) {
                                                 itinerary.stopOrder = currRide.stopOrder;
                                                 itinerary.rides = [];
+                                                itinerary._id = null;
                                                 //Then push the id to the itinerary
                                                 itinerary.rides.push(currRide);
-                                                //Then save the itinerary
-                                                DataProvider.setItinerary(itinerary, function(error, dbitin) {
-                                                    if(dbitin) {
-                                                        //Then push the id to the directedroute
-                                                        console.log("itinerary saved to the database");
-                                                        itinerary._id = dbitin._id;
-                                                        directedRoute.itineraries.push(itinerary);
-                                                        allItineraries.push(itinerary);
-                                                    } else {
-                                                       console.log("Error: itinerary not saved");
-                                                    }
-                                                    callback(null);
-                                                });
+                                                directedRoute.itineraries.push(itinerary);
+                                                allItineraries.push(itinerary);
                                             //Otherwise add directly the ride to the corresponding itinerary
                                             } else {
                                                 directedRoute.itineraries[itin].rides.push(currRide);
+                                                itinerary = directedRoute.itineraries[itin];
                                                 allItineraries[itin].rides.push(currRide);
-                                                callback(null);
                                             }
+                                            //Then save the itinerary
+                                            DataProvider.setItinerary(itinerary, function(error, dbitin) {
+                                                if(dbitin) {
+                                                    //Then push the id to the directedroute
+                                                    console.log("itinerary saved to the database");
+                                                    itinerary._id = dbitin._id;
+                                                } else {
+                                                   console.log("Error: itinerary not saved");
+                                                }
+                                                callback(null);
+                                            });
                                         } else {
                                             callback(null);
                                         }
@@ -260,25 +261,20 @@ checkRideExistence = function(allItineraries, currRide, callback){
             itin = null;
         }
     }
-    if(itin != null) {
+    if(itin !== null) {
         console.log("itinerary found");
+
         //check if the itinerary already has this ride
+        var currsched = currRide.schedules;
         for(var z = 0; z < allItineraries[itin].rides.length; z++) {
-            var currsched = currRide.schedules;
             var ridesched = allItineraries[itin].rides[z].schedules;
             if(currsched.length == ridesched.length) {
                 var allsched = true;
                 for(var x = 0; x < ridesched.length; x++) {
-                        // console.log("current");
-                        // console.log(ridesched[x].scheduleTime);
-                        // console.log("stored");
-                        // console.log(currsched[x].scheduleTime);
-                        //console.log(currsched);
                     if(ridesched[x].scheduleTime.getTime() != currsched[x].scheduleTime.getTime()) {
-                        console.log("different schedule");
                         allsched = false;
                         break;
-                    }   
+                    }
                 }
                 if(allsched) {
                     ridefound = true;
