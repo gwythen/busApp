@@ -287,7 +287,6 @@ checkRideExistence = function(allItineraries, currRide, callback){
                 }
             } else {
                 console.log("different schedule length");
-                ridefound = false;
             }
         }
     }
