@@ -175,11 +175,8 @@ DataProvider.prototype.getAllOrderedStops = function(line, callback) {
 DataProvider.prototype.getDirectedRoute = function(line, direction, callback) {
   schemas.DirectedRoute.findOne({lineName: line, direction: direction}).populate([{path:'allStops'},{path:'itineraries'}]).exec(
       function (err, result) {
-        var options = {
-          path: 'itineraries.rides',
-          model: 'Ride'
-        };
-        schemas.DirectedRoute.populate(result, options, function (err, routes) {
+        schemas.Itinerary.populate(result.itineraries, {path: 'rides'}, function (err, itins) {
+          result.itineraries = itins;
           callback(err, result);
         });
       }
@@ -188,65 +185,78 @@ DataProvider.prototype.getDirectedRoute = function(line, direction, callback) {
 
 DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
   var results = {};
-  var today = new Date();
-  var safeMinutes = today.getMinutes() - 10;
+  var date = new Date();
+  var today = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0,0));
+  var safeMinutes = date.getMinutes() - 10;
   if(safeMinutes < 0) {
     safeMinutes = 0;
   }
-  today.setHours(0);
-  today.setMinutes(0);
-  today.setSeconds(0);
-  today.setMilliseconds(0);
-  var scheduleTime = new Date(1970, 0, 1, today.getHours(), safeMinutes, 0, 0);
+
+  var scheduleTime = new Date(Date.UTC(1970, 0, 1));
+  scheduleTime.setUTCHours(date.getHours(), safeMinutes);
   console.log(direction);
   
   async.waterfall([
       function(wfcallback) {
-          schemas.DirectedRoute.find({direction: direction}, function(err, route) {
+          schemas.DirectedRoute.findOne({direction: direction}, function(err, route) {
               wfcallback(null, route);
           });
       },
       function(route, wfcallback) {
-        schemas.Record.find({direction: direction, date: today}).populate('rides').exec(
+        schemas.Record.findOne({directedRoute: route._id, date: today}).populate('rides').exec(
           function(err, record) {
             results.line = route.lineName;
             results.direction = route.direction;
             results.schedules = [];
             if(record) {
               wfcallback(null, record.rides);
-            } else {
-              var query = schemas.Ride.find({directedRoute: route._id})
-                  .where('schedules').elemMatch(function (elem) {
-                    elem.where('stop', depId);
-                    elem.where('scheduleTime').gte(scheduleTime);
-                  })
-                  .where('schedules').elemMatch(function (elem) {
-                    elem.where('stop', arrId);
-                    elem.where('scheduleTime').gt(scheduleTime);
-                  });
-
-              query.exec(function(err, result) {
-                  // console.log(result);
-                  // console.log(route);
-                  wfcallback(err, results);
-              });
             }
+            // } else {
+              // var query = schemas.Ride.find({directedRoute: route._id})
+              //     .where('schedules').elemMatch(function (elem) {
+              //       elem.where('stop', depId);
+              //       elem.where('scheduleTime').gte(scheduleTime);
+              //     })
+              // query.exec(function(err, result) {
+              //     wfcallback(err, results);
+              // });
+              // var rides = [];
+              // for(i = 0; i < record.rides.length; i++) {
+              //   var schedules = record.rides[i].schedules;
+              //   var foundDep = false;
+              //   for(var j = 0; j < schedules.length; j++) {
+              //     if(!foundDep) {
+              //       if((schedules[j].stop == depId) && (schedules[j].scheduleTime >= scheduleTime)) {
+              //         foundDep = true;
+              //       }
+              //     } else {
+              //       if((schedules[j].stop == arrId) && (schedules[j].scheduleTime > scheduleTime)) {
+              //         rides.push(record.rides[i]);
+              //         break;
+              //       }
+              //     }
+              //   }
+              // }
+            // }
           }
         );
       }
   ], function (err, rides) {
-      for(var i = 0; i < rides; i++) {
+      for(var i = 0; i < rides.length; i++) {
         var result = {};
         var depfound = false;
-        for (var j = 0; j < ride[i].schedules.length; j++) {
-          var currSchedule = ride[i].schedules[j];
+        for (var j = 0; j < rides[i].schedules.length; j++) {
+          var currSchedule = rides[i].schedules[j];
           if(!depfound) {
-            if(currSchedule.stop == depId && currSchedule.scheduleTime >= scheduleTime) {
+            console.log(currSchedule.stop.toString());
+            console.log(depId);
+            if(currSchedule.stop.toString() == depId) {
+              console.log("here");
               result.dep = currSchedule.scheduleTime;
               depfound = true;
             }
           } else {
-            if(currSchedule.stop == arrId && currSchedule.scheduleTime > scheduleTime) {
+            if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime > scheduleTime) {
               result.arr = currSchedule.scheduleTime;
               results.schedules.push(result);
               break;
@@ -290,8 +300,6 @@ DataProvider.prototype.setDirectedRoute = function(update, callback) {
         line.lineOriginalId = update.lineOriginalId;
         line.allStops = stops;
         line.itineraries = itins;
-        console.log("after");
-        console.log(line);
         line.save(function(err) {
           callback(err);
         });
@@ -336,9 +344,6 @@ DataProvider.prototype.setItinerary = function(itinerary, callback) {
           callback(err, dbitin);
         });
       } else {
-        // if(itinerary._id === null) {
-        //   itinerary._id = mongoose.Types.ObjectId();
-        // }
         var ridesIds = [];
         for(var i = 0; i < itinerary.rides.length; i++) {
           ridesIds.push(itinerary.rides[i]._id);
@@ -367,7 +372,6 @@ DataProvider.prototype.printData = function(callback) {
           path: 'rides'
         };
         schemas.Itinerary.populate(result.itineraries, {path: 'rides'}, function (err, docs) {
-          console.log(docs);
           callback(docs);
         })
     }

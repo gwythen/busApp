@@ -124,11 +124,8 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
         var totalRides = [];
 
         var record = {};
-        record.date = new Date();
-        record.date.setHours(0);
-        record.date.setMinutes(0);
-        record.date.setSeconds(0);
-        record.date.setMilliseconds(0);
+        var date = new Date();
+        record.date = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0,0));
         record.directedRoute = directedRoute._id;
         record.rides = [];
 
@@ -338,7 +335,11 @@ parseTimetable2 = function(body, stops, callback) {
                     var schedule = {};
                     schedule.stop = currStopDbId;
                     var time = $(rowColumns[k]).text().split(":");
-                    var scheduleTime = new Date(1970, 0, 1, time[0], time[1], 0, 0);
+
+                    var scheduleTime = new Date(Date.UTC(1970, 0, 1));
+                    scheduleTime.setHours(parseInt(time[0]));
+                    scheduleTime.setMinutes(parseInt(time[1]));
+
                     schedule.scheduleTime = scheduleTime;
                     rides[k].stopOrder.push(schedule.stop);
                     rides[k].schedules.push(schedule);
