@@ -309,13 +309,29 @@ DataProvider.prototype.setRide = function(ride, callback) {
 };
 
 DataProvider.prototype.setItinerary = function(itinerary, callback) {
-  schemas.Itinerary.create(itinerary, function (err, dbitin) {
-      if (err) {
-        console.log("error" + err);
+  schemas.Itinerary.findOne({_id: itinerary._id}, function(err, itin) {
+    if(!err) {
+      if(itin) {
+        itin.stopsOrder = itinerary.stopsOrder;
+        itin.rides = itinerary.rides;
+        itin.save(function(err, dbitin) {
+          callback(err, dbitin);
+        });
       } else {
-        console.log("itinerary created");
+        if(itinerary._id === null) {
+          itinerary._id = mongoose.Types.ObjectId();
+        }
+        schemas.Itinerary.create(itinerary, function (err, dbitin) {
+              if (err) {
+                console.log("error" + err);
+              } else {
+                console.log("itinerary created");
+              }
+              console.log(dbitin);
+              callback(err, dbitin);
+        });
       }
-      callback(err, dbitin);
+    }
   });
 };
 
