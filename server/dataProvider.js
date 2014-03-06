@@ -272,9 +272,26 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
 };
 
 DataProvider.prototype.setDirectedRoute = function(update, callback) {
+  var stops = [];
+  var itins = [];
+
+  for(var i = 0; i < update.allStops.length; i++) {
+    stops.push(update.allStops[i]._id);
+  }
+  for(var i = 0; i < update.itineraries.length; i++) {
+    itins.push(update.itineraries[i]._id);
+  }
+
   schemas.DirectedRoute.findOne({_id: update._id}, function(err, line) {
     if(!err) {
-        line = update;
+        line.direction = update.direction;
+        line.originalDirectionId = update.originalDirectionId;
+        line.lineName = update.lineName;
+        line.lineOriginalId = update.lineOriginalId;
+        line.allStops = stops;
+        line.itineraries = itins;
+        console.log("after");
+        console.log(line);
         line.save(function(err) {
           callback(err);
         });
@@ -312,27 +329,53 @@ DataProvider.prototype.setItinerary = function(itinerary, callback) {
   schemas.Itinerary.findOne({_id: itinerary._id}, function(err, itin) {
     if(!err) {
       if(itin) {
-        itin.stopsOrder = itinerary.stopsOrder;
+        console.log("itinerary found");
+        itin.stopOrder = itinerary.stopOrder;
         itin.rides = itinerary.rides;
         itin.save(function(err, dbitin) {
           callback(err, dbitin);
         });
       } else {
-        if(itinerary._id === null) {
-          itinerary._id = mongoose.Types.ObjectId();
+        // if(itinerary._id === null) {
+        //   itinerary._id = mongoose.Types.ObjectId();
+        // }
+        var ridesIds = [];
+        for(var i = 0; i < itinerary.rides.length; i++) {
+          ridesIds.push(itinerary.rides[i]._id);
         }
+        var newitin = {};
+        newitin.rides = ridesIds;
+        newitin.stopOrder = itinerary.stopOrder;
+        newitin._id = itinerary._id;
         schemas.Itinerary.create(itinerary, function (err, dbitin) {
               if (err) {
                 console.log("error" + err);
               } else {
                 console.log("itinerary created");
               }
-              console.log(dbitin);
               callback(err, dbitin);
         });
       }
     }
   });
 };
+
+DataProvider.prototype.printData = function(callback) {
+  schemas.DirectedRoute.findOne({lineName: "230", direction:"fromSophia"}).populate('itineraries').exec(
+    function (err, result) {
+        var options = {
+          path: 'rides'
+        };
+        schemas.Itinerary.populate(result.itineraries, {path: 'rides'}, function (err, docs) {
+          console.log(docs);
+          callback(docs);
+        })
+    }
+  ) 
+}
+
+DataProvider.prototype.getId = function() {
+  return mongoose.Types.ObjectId();
+}
 
 exports.DataProvider = DataProvider;
