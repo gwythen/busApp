@@ -39,6 +39,7 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                   displayKey: 'name',
                   source: depStops.ttAdapter()
                 }).on('typeahead:selected', function (obj, datum) {
+                    console.log(datum);
                     self.saveValue(datum, "outDepStop");
                     var returnStop = self.searchReturnStop(datum);
                     self.saveValue(returnStop, "inDepStop");
@@ -47,6 +48,7 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                   displayKey: 'name',
                   source: arrStops.ttAdapter()
                 }).on('typeahead:selected', function (obj, datum) {
+                    console.log(datum);
                     self.saveValue(datum, "outArrStop");
                     var returnStop = self.searchReturnStop(datum);
                     self.saveValue(returnStop, "inArrStop");
@@ -68,7 +70,8 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                 var inStops = Stops.in.toJSON();
                 for(var i = 0; i < inStops.length; i++) {
                     if(inStops[i].logicalId == datum.logicalId) {
-                        return datum;
+                        console.log(inStops[i]);
+                        return inStops[i];
                     }
                 }
             },

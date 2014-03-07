@@ -214,10 +214,11 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
           });
       }
   ], function (err, route, rides) {
-      for(var i = 0; i < rides.length; i++) {
+      for(var i = 0; i < rides.length && results.length <= 5; i++) {
         var result = {};
         result.lineName = route.lineName;
-        result.direction = route.directionDisplay;
+        result.direction = route.direction;
+        result.directionDisplay = route.directionDisplay;
         result.schedules = [];
         var depfound = false;
         for (var j = 0; j < rides[i].schedules.length; j++) {

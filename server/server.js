@@ -185,28 +185,25 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
                         ], function (err) {
                             var result = {};
                             result.lineName = directedRoute.lineName;
+                            result.direction = directedRoute.direction;
                             result.direction = directedRoute.directionDisplay;
                             result.schedules = [];
                             var depfound = false;
                             for (var j = 0; j < currRide.schedules.length; j++) {
                               var currSchedule = currRide.schedules[j];
                               if(!depfound) {
-                                console.log(currSchedule);
                                 if(currSchedule.stop.toString() == depId && currSchedule.scheduleTime.getTime() >= currentTime.getTime()) {
-                                  console.log("here");
                                   result.depHour = currSchedule.scheduleTime;
                                   depfound = true;
                                 }
                               } else {
                                 if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime.getTime() > currentTime.getTime()) {
-                                console.log("here2");
                                   result.arrHour = currSchedule.scheduleTime;
                                   results.push(result);
                                   break;
                                 }
                               } 
                             }
-                            console.log(results);
                             record.rides.push(currRide._id);
                             loopCallback();
                         });
