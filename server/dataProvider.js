@@ -189,13 +189,12 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
   var results = [];
   var date = new Date();
   var today = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0,0));
-  var safeMinutes = date.getMinutes() - 10;
-  if(safeMinutes < 0) {
-    safeMinutes = 0;
-  }
-
-  var scheduleTime = new Date(1970, 0, 1, date.getHours(), safeMinutes, 0, 0);
   
+  var MS_PER_MINUTE = 60000;
+
+  var scheduleTime = new Date(1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0);
+  scheduleTime = new Date(scheduleTime.getTime() - 10 * MS_PER_MINUTE);
+
   async.waterfall([
       function(wfcallback) {
           schemas.DirectedRoute.findOne({direction: direction}, function(err, route) {

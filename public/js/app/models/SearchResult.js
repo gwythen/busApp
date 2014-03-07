@@ -11,7 +11,7 @@ define([
         var depDate = new Date(this.attributes.depHour);
         var arrDate = new Date(this.attributes.arrHour);
         var self = this;
-        this.set("duration", self.getTimeDifference(arrDate, depDate));
+        this.set("duration", self.getTimeDifference(arrDate, depDate).textual);
         var currentDate = new Date();
         currentDate.setHours(depDate.getHours());
         currentDate.setMinutes(depDate.getMinutes());
@@ -29,33 +29,42 @@ define([
       getCounter: function(date1, date2) {
         var counter = {};
         counter.expired = false;
-        counter.textual = this.getTimeDifference(date1, date2);
-        if(counter.textual === "00 secs") {
+        var difference = this.getTimeDifference(date1, date2);
+        counter.textual = difference.textual;
+        counter.diff = difference.diff;
+        if(counter.textual === "00 SECS") {
           counter.expired = true;
           clearInterval(this.counterInterval);
         }
         return counter;
       },
 
-      getTimeDifference: function(date1, date2) {   
+      getTimeDifference: function(date1, date2) {
+        var difference = {};
         var diff = date1.getTime() - date2.getTime();
+        difference.diff = diff;
         var hours = Math.floor(diff / 1000 / 60 / 60);
         diff -= hours * 1000 * 60 * 60;
         var minutes = Math.floor(diff / 1000 / 60);
         diff-= minutes * 1000 * 60;
         var seconds = Math.floor(diff / 1000);
         var displayTime = "";
-        if (hours > 0) {
-          displayTime = (hours <= 9 ? "0" : "") + hours + " hrs and " + (minutes <= 9 ? "0" : "") + minutes + " mins";
-        } else if(minutes > 0) {
-            displayTime = (minutes <= 9 ? "0" : "") + minutes + " mins";
-        } else if(seconds > 0) {
-           displayTime = (seconds <= 9 ? "0" : "") + seconds + " secs";
+        if(difference.diff > 0) {
+          if (hours > 0) {
+            displayTime = (hours <= 9 ? "0" : "") + hours + " hrs and " + (minutes <= 9 ? "0" : "") + minutes + " mins";
+          } else if(minutes > 0) {
+              displayTime = (minutes <= 9 ? "0" : "") + minutes + " mins";
+          } else if(seconds > 0) {
+             displayTime = (seconds <= 9 ? "0" : "") + seconds + " secs";
+          } else {
+             displayTime = "00 secs";  
+          }
         } else {
-           displayTime = "00 secs";  
+          displayTime = "00 secs";
         }
         
-        return displayTime.toUpperCase();    
+        difference.textual = displayTime.toUpperCase();
+        return difference;    
       }
     });
   });

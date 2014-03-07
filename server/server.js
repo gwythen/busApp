@@ -163,13 +163,10 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
             function (err) {
                 if(totalRides.length > 0) {
                     var date = new Date();
-                    var safeMinutes = date.getMinutes() - 10;
-                    if(safeMinutes < 0) {
-                      safeMinutes = 0;
-                    }
 
-                    var currentTime = new Date(1970, 0, 1, date.getHours(), safeMinutes, 0, 0);
-                    //TODO insert for an async loop and save a record
+                    var currentTime = new Date(1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0);
+                    currentTime = new Date(currentTime.getTime() - 10 * MS_PER_MINUTE);
+                    
                     async.eachSeries(totalRides, function(currRide, loopCallback) {
                         async.waterfall([
                             function(callback) {
