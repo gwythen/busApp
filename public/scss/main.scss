@@ -237,6 +237,10 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   clear: both;
 }
 
+.counter-container {
+  margin-top:0.9rem;
+}
+
 .nextCounter {
     font-size: 1.6rem;
     font-family: Lato-light;
@@ -248,7 +252,10 @@ p, legend, h1, h2, h3, h4, h5, h6 {
     color: white;
     float: right;
     clear: both;
-    margin-top:0.9rem;
+}
+
+.doubled {
+  color: rgb(164, 240, 164);
 }
 
 .nextArrival {

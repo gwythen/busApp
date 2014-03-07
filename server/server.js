@@ -168,7 +168,7 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
                       safeMinutes = 0;
                     }
 
-                    var currentTime = new Date(Date.UTC(1970, 0, 1, date.getHours(), safeMinutes, 0, 0));
+                    var currentTime = new Date(1970, 0, 1, date.getHours(), safeMinutes, 0, 0);
                     //TODO insert for an async loop and save a record
                     async.eachSeries(totalRides, function(currRide, loopCallback) {
                         async.waterfall([
@@ -193,8 +193,13 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
                               var currSchedule = currRide.schedules[j];
                               if(!depfound) {
                                 if(currSchedule.stop.toString() == depId && currSchedule.scheduleTime.getTime() >= currentTime.getTime()) {
-                                  result.depHour = currSchedule.scheduleTime;
-                                  depfound = true;
+                                  if(results.length > 0 && currSchedule.scheduleTime.getTime() == results[results.length - 1].depHour.getTime()) {
+                                    results[results.length - 1].doubled = true;
+                                    break;
+                                  } else {
+                                    result.depHour = currSchedule.scheduleTime;
+                                    depfound = true;
+                                  }
                                 }
                               } else {
                                 if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime.getTime() > currentTime.getTime()) {
@@ -216,7 +221,7 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
                         DataProvider.setRecord(record, function(error) {
                             console.log("record saved to the database");
                         });
-                        mainCallback(results);
+                        mainCallback(results.splice(0,5));
                     });
                 }  else {
                     mainCallback(results);

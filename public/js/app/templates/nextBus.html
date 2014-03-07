@@ -6,7 +6,12 @@
     <div class="nextLabel">Scheduled Time</div>
     <div class="nextHeader depStop">{{depStop}}</div>
     <div class="nextTime">{{depDisplayHour}}</div>
-    <div class="nextCounter" id="counter"></div>
+    <div class="counter-container">
+        {{#if doubled}}
+        <div class="nextCounter doubled">double service</div>
+        {{/if}}
+        <div class="nextCounter" id="counter"></div>
+    </div>
     <div class="nextLabel">Arrival Time</div>
     <div class="nextHeader">{{arrDisplayHour}} ({{duration}})</div>
 </div>

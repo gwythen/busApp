@@ -194,7 +194,7 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
     safeMinutes = 0;
   }
 
-  var scheduleTime = new Date(Date.UTC(1970, 0, 1, date.getHours(), safeMinutes, 0, 0));
+  var scheduleTime = new Date(1970, 0, 1, date.getHours(), safeMinutes, 0, 0);
   
   async.waterfall([
       function(wfcallback) {
@@ -214,7 +214,7 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
           });
       }
   ], function (err, route, rides) {
-      for(var i = 0; i < rides.length && results.length <= 5; i++) {
+      for(var i = 0; i < rides.length; i++) {
         var result = {};
         result.lineName = route.lineName;
         result.direction = route.direction;
@@ -225,8 +225,14 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
           var currSchedule = rides[i].schedules[j];
           if(!depfound) {
             if(currSchedule.stop.toString() == depId && currSchedule.scheduleTime.getTime() >= scheduleTime.getTime()) {
-              result.depHour = currSchedule.scheduleTime;
-              depfound = true;
+              if(results.length > 0 && currSchedule.scheduleTime.getTime() == results[results.length - 1].depHour.getTime()) {
+                results[results.length - 1].doubled = true;
+                break;
+              } else {
+                result.depHour = currSchedule.scheduleTime;
+                depfound = true;
+              }
+              
             }
           } else {
             if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime.getTime() > scheduleTime.getTime()) {
@@ -237,7 +243,7 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
           } 
         }
       }
-      callback(null, results);
+      callback(null, results.splice(0,5));
   });
 };
 
