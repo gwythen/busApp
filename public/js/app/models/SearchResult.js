@@ -32,12 +32,12 @@ define([
         var counter = {};
         counter.expired = false;
         var difference = this.getTimeDifference(date1, date2);
-        counter.textual = difference.textual;
         counter.diff = difference.diff;
-        if(counter.textual === "00 SECS") {
+        if(difference.textual === "00 SECS") {
           counter.expired = true;
           clearInterval(this.counterInterval);
         }
+        counter.textual = "IN " + difference.textual;
         return counter;
       },
 
