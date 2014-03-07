@@ -184,7 +184,7 @@ DataProvider.prototype.getDirectedRoute = function(line, direction, callback) {
 };
 
 DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
-  var results = {};
+  var results = [];
   var date = new Date();
   var today = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0,0));
   var safeMinutes = date.getMinutes() - 10;
@@ -192,9 +192,7 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
     safeMinutes = 0;
   }
 
-  var scheduleTime = new Date(Date.UTC(1970, 0, 1));
-  scheduleTime.setUTCHours(date.getHours(), safeMinutes);
-  console.log(direction);
+  var scheduleTime = new Date(Date.UTC(1970, 0, 1, date.getHours(), safeMinutes, 0, 0));
   
   async.waterfall([
       function(wfcallback) {
@@ -205,67 +203,38 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
       function(route, wfcallback) {
         schemas.Record.findOne({directedRoute: route._id, date: today}).populate('rides').exec(
           function(err, record) {
-            results.line = route.lineName;
-            results.direction = route.direction;
-            results.schedules = [];
             if(record) {
-              wfcallback(null, record.rides);
+              wfcallback(null, route, record.rides);
+            } else {
+              callback(null);
+              return;
             }
-            // } else {
-              // var query = schemas.Ride.find({directedRoute: route._id})
-              //     .where('schedules').elemMatch(function (elem) {
-              //       elem.where('stop', depId);
-              //       elem.where('scheduleTime').gte(scheduleTime);
-              //     })
-              // query.exec(function(err, result) {
-              //     wfcallback(err, results);
-              // });
-              // var rides = [];
-              // for(i = 0; i < record.rides.length; i++) {
-              //   var schedules = record.rides[i].schedules;
-              //   var foundDep = false;
-              //   for(var j = 0; j < schedules.length; j++) {
-              //     if(!foundDep) {
-              //       if((schedules[j].stop == depId) && (schedules[j].scheduleTime >= scheduleTime)) {
-              //         foundDep = true;
-              //       }
-              //     } else {
-              //       if((schedules[j].stop == arrId) && (schedules[j].scheduleTime > scheduleTime)) {
-              //         rides.push(record.rides[i]);
-              //         break;
-              //       }
-              //     }
-              //   }
-              // }
-            // }
-          }
-        );
+          });
       }
-  ], function (err, rides) {
+  ], function (err, route, rides) {
       for(var i = 0; i < rides.length; i++) {
         var result = {};
+        result.lineName = route.lineName;
+        result.direction = route.direction;
+        result.schedules = [];
         var depfound = false;
         for (var j = 0; j < rides[i].schedules.length; j++) {
           var currSchedule = rides[i].schedules[j];
           if(!depfound) {
-            console.log(currSchedule.stop.toString());
-            console.log(depId);
-            if(currSchedule.stop.toString() == depId) {
-              console.log("here");
-              result.dep = currSchedule.scheduleTime;
+            if(currSchedule.stop.toString() == depId && currSchedule.scheduleTime.getTime() >= scheduleTime.getTime()) {
+              result.depHour = currSchedule.scheduleTime;
               depfound = true;
             }
           } else {
-            if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime > scheduleTime) {
-              result.arr = currSchedule.scheduleTime;
-              results.schedules.push(result);
+            if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime.getTime() > scheduleTime.getTime()) {
+              result.arrHour = currSchedule.scheduleTime;
+              results.push(result);
               break;
             }
-          }
-          
+          } 
         }
       }
-      callback(results);
+      callback(null, results);
   });
 
   // var query = schemas.Line.find({})
