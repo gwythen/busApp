@@ -10,6 +10,8 @@ define([
       initialize: function() {
         var depDate = new Date(this.attributes.depHour);
         var arrDate = new Date(this.attributes.arrHour);
+        console.log(depDate);
+        console.log(arrDate);
         var self = this;
         this.set("duration", self.getTimeDifference(arrDate, depDate).textual);
         var currentDate = new Date();

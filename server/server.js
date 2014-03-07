@@ -218,7 +218,10 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
                         DataProvider.setRecord(record, function(error) {
                             console.log("record saved to the database");
                         });
-                        mainCallback(results.splice(0,5));
+                        if(results.length > 5) {
+                            results = results.splice(0,5);
+                        }
+                        mainCallback(results);
                     });
                 }  else {
                     mainCallback(results);

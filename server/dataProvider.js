@@ -242,7 +242,11 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
           } 
         }
       }
-      callback(null, results.splice(0,5));
+
+      if(results.length > 5) {
+        results = results.splice(0,5);
+      }
+      callback(null, results);
   });
 };
 
