@@ -145,7 +145,7 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
                         });
                     },
                     function(body, callback) {
-                        parseTimetable2(body, directedRoute.allStops, function(rides, curr, max) {
+                        parseTimetable(body, directedRoute.allStops, function(rides, curr, max) {
                             callback(null, rides, curr, max);
                         });
                     }
@@ -162,6 +162,13 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
             function () { return currIndex <= maxIndex; },
             function (err) {
                 if(totalRides.length > 0) {
+                    var date = new Date();
+                    var safeMinutes = date.getMinutes() - 10;
+                    if(safeMinutes < 0) {
+                      safeMinutes = 0;
+                    }
+
+                    var currentTime = new Date(Date.UTC(1970, 0, 1, date.getHours(), safeMinutes, 0, 0));
                     //TODO insert for an async loop and save a record
                     async.eachSeries(totalRides, function(currRide, loopCallback) {
                         async.waterfall([
@@ -177,26 +184,29 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
                             }
                         ], function (err) {
                             var result = {};
-                            result.lineName = directedroute.lineName;
-                            result.direction = directedRoute.direction;
+                            result.lineName = directedRoute.lineName;
+                            result.direction = directedRoute.directionDisplay;
                             result.schedules = [];
                             var depfound = false;
                             for (var j = 0; j < currRide.schedules.length; j++) {
                               var currSchedule = currRide.schedules[j];
                               if(!depfound) {
-                                if(currSchedule.stop.toString() == depId && currSchedule.scheduleTime.getTime() >= scheduleTime.getTime()) {
+                                console.log(currSchedule);
+                                if(currSchedule.stop.toString() == depId && currSchedule.scheduleTime.getTime() >= currentTime.getTime()) {
+                                  console.log("here");
                                   result.depHour = currSchedule.scheduleTime;
                                   depfound = true;
                                 }
                               } else {
-                                if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime.getTime() > scheduleTime.getTime()) {
+                                if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime.getTime() > currentTime.getTime()) {
+                                console.log("here2");
                                   result.arrHour = currSchedule.scheduleTime;
                                   results.push(result);
                                   break;
                                 }
                               } 
                             }
-
+                            console.log(results);
                             record.rides.push(currRide._id);
                             loopCallback();
                         });
@@ -220,8 +230,6 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
 };
 
 populateDatabase = function(itin, ridefound, currRide, directedRoute, allItineraries, callback) {
-    console.log("itin " + itin);
-    console.log("ridefound " + ridefound);
     if(itin === null || !ridefound) {
         //First create a new ride
         currRide.directedRoute = directedRoute._id;
@@ -315,7 +323,7 @@ checkRideExistence = function(allItineraries, currRide, callback){
     callback(itin, ridefound);
 };
 
-parseTimetable2 = function(body, stops, callback) {
+parseTimetable = function(body, stops, callback) {
     var subWindow = jsdom(body).createWindow();
     var $ = require('jquery').create(subWindow);
     var rows = $("tbody tr[class^='row']");

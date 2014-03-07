@@ -81,6 +81,7 @@ DataProvider.prototype.reset = function(mainCallback) {
       function(wfcallback) {
         allOrderedStops[1] = {
           direction: "toSophia",
+          directionDisplay: "Sophia",
           originalDirectionId: 1,
           lineName: "230",
           lineOriginalId: 468,
@@ -89,6 +90,7 @@ DataProvider.prototype.reset = function(mainCallback) {
         };
         allOrderedStops[2] = {
           direction: "fromSophia",
+          directionDisplay: "Nice",
           originalDirectionId: 2,
           lineName: "230",
           lineOriginalId: 468,
@@ -215,7 +217,7 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
       for(var i = 0; i < rides.length; i++) {
         var result = {};
         result.lineName = route.lineName;
-        result.direction = route.direction;
+        result.direction = route.directionDisplay;
         result.schedules = [];
         var depfound = false;
         for (var j = 0; j < rides[i].schedules.length; j++) {
@@ -236,18 +238,6 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
       }
       callback(null, results);
   });
-
-  // var query = schemas.Line.find({})
-  //   .where('directedRoutes.direction', direction)
-  //   .all('directedRoutes.allStops', [depId, arrId])
-  //   .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
-  //     elem.where('stop', depId);
-  //     elem.where('scheduleDate').gte(today.valueOf()).lte(tomorrow.valueOf());
-  //   })
-  //   .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
-  //     elem.where('stop', arrId);
-  //     elem.where('scheduleDate').gt(today.valueOf()).lte(tomorrow.valueOf());
-  //   });
 };
 
 DataProvider.prototype.setDirectedRoute = function(update, callback) {
@@ -264,6 +254,7 @@ DataProvider.prototype.setDirectedRoute = function(update, callback) {
   schemas.DirectedRoute.findOne({_id: update._id}, function(err, line) {
     if(!err) {
         line.direction = update.direction;
+        line.directionDisplay = update.directionDisplay;
         line.originalDirectionId = update.originalDirectionId;
         line.lineName = update.lineName;
         line.lineOriginalId = update.lineOriginalId;
