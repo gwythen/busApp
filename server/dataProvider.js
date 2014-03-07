@@ -193,7 +193,7 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
   var MS_PER_MINUTE = 60000;
 
   var scheduleTime = new Date(1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0);
-  scheduleTime = new Date(scheduleTime.getTime() - 10 * MS_PER_MINUTE);
+  scheduleTime = new Date(scheduleTime.getTime() - 5 * MS_PER_MINUTE);
 
   async.waterfall([
       function(wfcallback) {

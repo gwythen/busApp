@@ -165,7 +165,7 @@ scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
                     var date = new Date();
 
                     var currentTime = new Date(1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0);
-                    currentTime = new Date(currentTime.getTime() - 10 * MS_PER_MINUTE);
+                    currentTime = new Date(currentTime.getTime() - 5 * MS_PER_MINUTE);
                     
                     async.eachSeries(totalRides, function(currRide, loopCallback) {
                         async.waterfall([
