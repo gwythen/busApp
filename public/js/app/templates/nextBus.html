@@ -1,8 +1,6 @@
 <div class="nextBus-content right-aligned">
     <div class="nextLabel">Line</div>
     <div class="nextHeader">{{lineName}}</div>
-    <div class="nextLabel">Direction</div>
-    <div class="nextHeader">{{directionDisplay}}</div>
     <div class="nextLabel">Scheduled Time</div>
     <div class="nextHeader depStop">{{depStop}}</div>
     <div class="nextTime">{{depDisplayHour}}</div>
@@ -12,6 +10,8 @@
         {{/if}}
         <div class="nextCounter" id="counter"></div>
     </div>
+    <div class="nextLabel">Direction</div>
+    <div class="nextHeader">{{directionDisplay}}</div>
     <div class="nextLabel">Arrival Time</div>
     <div class="nextHeader">{{arrDisplayHour}} <span class="nextCounter">{{duration}}</span></div>
 

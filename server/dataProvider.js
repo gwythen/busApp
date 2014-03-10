@@ -202,20 +202,26 @@ DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
           });
       },
       function(route, wfcallback) {
+          schemas.Stop.findOne({_id: depId}, function(err, stop) {
+              wfcallback(null, route, stop.stopName);
+          });
+      },
+      function(route, stopName, wfcallback) {
         schemas.Record.findOne({directedRoute: route._id, date: today}).populate('rides').exec(
           function(err, record) {
             if(record) {
-              wfcallback(null, route, record.rides);
+              wfcallback(null, route, stopName, record.rides);
             } else {
               callback(null);
               return;
             }
           });
       }
-  ], function (err, route, rides) {
+  ], function (err, route, stopName, rides) {
       for(var i = 0; i < rides.length; i++) {
         var result = {};
         result.lineName = route.lineName;
+        result.depStop = stopName;
         result.direction = route.direction;
         result.directionDisplay = route.directionDisplay;
         result.schedules = [];

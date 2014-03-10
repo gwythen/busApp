@@ -116,118 +116,121 @@ getBuses = function(depId, arrId, line, direction, mainCallback) {
 
 scrapeBuses = function(depId, arrId, line, direction, mainCallback) {
     DataProvider.getDirectedRoute(line, direction, function(error, result) {
-        var directedRoute = result;
-        var today = moment();
-        var url = "http://www.ceparou06.fr/horaires_ligne/index.asp?rub_code=6&thm_id=0&lign_id=" + directedRoute.lineOriginalId + "&sens=" + directedRoute.originalDirectionId + "&date=" + today.format("DD") + "%2F" + today.format("MM") + "%2F" + today.format("YYYY") + "&index=";
-        console.log(url);
-        var currIndex = 1;
-        var maxIndex = 2;
-        var totalRides = [];
+        DataProvider.getStop(depId, function(error, stop) {
+            var directedRoute = result;
+            var today = moment();
+            var url = "http://www.ceparou06.fr/horaires_ligne/index.asp?rub_code=6&thm_id=0&lign_id=" + directedRoute.lineOriginalId + "&sens=" + directedRoute.originalDirectionId + "&date=" + today.format("DD") + "%2F" + today.format("MM") + "%2F" + today.format("YYYY") + "&index=";
+            console.log(url);
+            var currIndex = 1;
+            var maxIndex = 2;
+            var totalRides = [];
+            var stopName = stop.stopName;
+            var record = {};
+            var date = new Date();
+            record.date = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0,0));
+            record.directedRoute = directedRoute._id;
+            record.rides = [];
+            var MS_PER_MINUTE = 60000;
+            var results = [];
 
-        var record = {};
-        var date = new Date();
-        record.date = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0,0));
-        record.directedRoute = directedRoute._id;
-        record.rides = [];
-        
-        var results = [];
-
-        var allItineraries = [];
-        for(var i = 0; i < directedRoute.itineraries.length; i++) {
-            allItineraries.push(directedRoute.itineraries[i].toObject());
-        }
-        async.doWhilst(
-            function (docallback) {
-                async.waterfall([
-                    function(callback) {
-                        getWebPage(url+currIndex, function(body) {
-                            callback(null, body);
-                        });
-                    },
-                    function(body, callback) {
-                        parseTimetable(body, directedRoute.allStops, function(rides, curr, max) {
-                            callback(null, rides, curr, max);
-                        });
-                    }
-                ], function (err, rides, curr, max) {
-                    totalRides.push.apply(totalRides, rides);
-                    if(curr == max) {
-                        curr = curr + 1;
-                    }
-                    currIndex = curr;
-                    maxIndex = max;
-                    docallback();
-                });
-            },
-            function () { return currIndex <= maxIndex; },
-            function (err) {
-                if(totalRides.length > 0) {
-                    var date = new Date();
-
-                    var currentTime = new Date(1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0);
-                    currentTime = new Date(currentTime.getTime() - 5 * MS_PER_MINUTE);
-                    
-                    async.eachSeries(totalRides, function(currRide, loopCallback) {
-                        async.waterfall([
-                            function(callback) {
-                                checkRideExistence(allItineraries, currRide, function(itin, ridefound){
-                                    callback(null, itin, ridefound);
-                                });
-                            },
-                            function(itin, ridefound, callback) {
-                                populateDatabase(itin, ridefound, currRide, directedRoute, allItineraries, function() {
-                                    callback();
-                                });
-                            }
-                        ], function (err) {
-                            var result = {};
-                            result.lineName = directedRoute.lineName;
-                            result.direction = directedRoute.direction;
-                            result.direction = directedRoute.directionDisplay;
-                            result.schedules = [];
-                            var depfound = false;
-                            for (var j = 0; j < currRide.schedules.length; j++) {
-                              var currSchedule = currRide.schedules[j];
-                              if(!depfound) {
-                                if(currSchedule.stop.toString() == depId && currSchedule.scheduleTime.getTime() >= currentTime.getTime()) {
-                                  if(results.length > 0 && currSchedule.scheduleTime.getTime() == results[results.length - 1].depHour.getTime()) {
-                                    results[results.length - 1].doubled = true;
-                                    break;
-                                  } else {
-                                    result.depHour = currSchedule.scheduleTime;
-                                    depfound = true;
-                                  }
-                                }
-                              } else {
-                                if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime.getTime() > currentTime.getTime()) {
-                                  result.arrHour = currSchedule.scheduleTime;
-                                  results.push(result);
-                                  break;
-                                }
-                              } 
-                            }
-                            record.rides.push(currRide._id);
-                            loopCallback();
-                        });
-                    }, function(err) {
-                        //Finally update the directed route 
-                        DataProvider.setDirectedRoute(directedRoute, function(error) {
-                            console.log("route saved to the database");
-                        });
-                        //And store a record of the rides for the day
-                        DataProvider.setRecord(record, function(error) {
-                            console.log("record saved to the database");
-                        });
-                        if(results.length > 5) {
-                            results = results.splice(0,5);
-                        }
-                        mainCallback(results);
-                    });
-                }  else {
-                    mainCallback(results);
-                }
+            var allItineraries = [];
+            for(var i = 0; i < directedRoute.itineraries.length; i++) {
+                allItineraries.push(directedRoute.itineraries[i].toObject());
             }
-        );
+            async.doWhilst(
+                function (docallback) {
+                    async.waterfall([
+                        function(callback) {
+                            getWebPage(url+currIndex, function(body) {
+                                callback(null, body);
+                            });
+                        },
+                        function(body, callback) {
+                            parseTimetable(body, directedRoute.allStops, function(rides, curr, max) {
+                                callback(null, rides, curr, max);
+                            });
+                        }
+                    ], function (err, rides, curr, max) {
+                        totalRides.push.apply(totalRides, rides);
+                        if(curr == max) {
+                            curr = curr + 1;
+                        }
+                        currIndex = curr;
+                        maxIndex = max;
+                        docallback();
+                    });
+                },
+                function () { return currIndex <= maxIndex; },
+                function (err) {
+                    if(totalRides.length > 0) {
+                        var date = new Date();
+
+                        var currentTime = new Date(1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0);
+                        currentTime = new Date(currentTime.getTime() - 5 * MS_PER_MINUTE);
+                        
+                        async.eachSeries(totalRides, function(currRide, loopCallback) {
+                            async.waterfall([
+                                function(callback) {
+                                    checkRideExistence(allItineraries, currRide, function(itin, ridefound){
+                                        callback(null, itin, ridefound);
+                                    });
+                                },
+                                function(itin, ridefound, callback) {
+                                    populateDatabase(itin, ridefound, currRide, directedRoute, allItineraries, function() {
+                                        callback();
+                                    });
+                                }
+                            ], function (err) {
+                                var result = {};
+                                result.lineName = directedRoute.lineName;
+                                result.depStop = stopName;
+                                result.direction = directedRoute.direction;
+                                result.direction = directedRoute.directionDisplay;
+                                result.schedules = [];
+                                var depfound = false;
+                                for (var j = 0; j < currRide.schedules.length; j++) {
+                                  var currSchedule = currRide.schedules[j];
+                                  if(!depfound) {
+                                    if(currSchedule.stop.toString() == depId && currSchedule.scheduleTime.getTime() >= currentTime.getTime()) {
+                                      if(results.length > 0 && currSchedule.scheduleTime.getTime() == results[results.length - 1].depHour.getTime()) {
+                                        results[results.length - 1].doubled = true;
+                                        break;
+                                      } else {
+                                        result.depHour = currSchedule.scheduleTime;
+                                        depfound = true;
+                                      }
+                                    }
+                                  } else {
+                                    if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime.getTime() > currentTime.getTime()) {
+                                      result.arrHour = currSchedule.scheduleTime;
+                                      results.push(result);
+                                      break;
+                                    }
+                                  } 
+                                }
+                                record.rides.push(currRide._id);
+                                loopCallback();
+                            });
+                        }, function(err) {
+                            //Finally update the directed route 
+                            DataProvider.setDirectedRoute(directedRoute, function(error) {
+                                console.log("route saved to the database");
+                            });
+                            //And store a record of the rides for the day
+                            DataProvider.setRecord(record, function(error) {
+                                console.log("record saved to the database");
+                            });
+                            if(results.length > 5) {
+                                results = results.splice(0,5);
+                            }
+                            mainCallback(results);
+                        });
+                    }  else {
+                        mainCallback(results);
+                    }
+                }
+            );
+        });
     });
 };
 
