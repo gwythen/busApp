@@ -5,6 +5,7 @@ var mongoose = require('mongoose'),
  
 var directedRouteSchema = new Schema({
 	direction: String,
+	directionDisplay: String,
 	originalDirectionId: Number,
 	lineName: String,
 	lineOriginalId: Number,

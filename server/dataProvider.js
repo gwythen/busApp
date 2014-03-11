@@ -81,6 +81,7 @@ DataProvider.prototype.reset = function(mainCallback) {
       function(wfcallback) {
         allOrderedStops[1] = {
           direction: "toSophia",
+          directionDisplay: "Sophia",
           originalDirectionId: 1,
           lineName: "230",
           lineOriginalId: 468,
@@ -89,6 +90,7 @@ DataProvider.prototype.reset = function(mainCallback) {
         };
         allOrderedStops[2] = {
           direction: "fromSophia",
+          directionDisplay: "Nice",
           originalDirectionId: 2,
           lineName: "230",
           lineOriginalId: 468,
@@ -175,11 +177,8 @@ DataProvider.prototype.getAllOrderedStops = function(line, callback) {
 DataProvider.prototype.getDirectedRoute = function(line, direction, callback) {
   schemas.DirectedRoute.findOne({lineName: line, direction: direction}).populate([{path:'allStops'},{path:'itineraries'}]).exec(
       function (err, result) {
-        var options = {
-          path: 'itineraries.rides',
-          model: 'Ride'
-        };
-        schemas.DirectedRoute.populate(result, options, function (err, routes) {
+        schemas.Itinerary.populate(result.itineraries, {path: 'rides'}, function (err, itins) {
+          result.itineraries = itins;
           callback(err, result);
         });
       }
@@ -187,94 +186,96 @@ DataProvider.prototype.getDirectedRoute = function(line, direction, callback) {
 };
 
 DataProvider.prototype.getBuses = function(depId, arrId, direction, callback) {
-  var results = {};
-  var today = new Date();
-  var safeMinutes = today.getMinutes() - 10;
-  if(safeMinutes < 0) {
-    safeMinutes = 0;
-  }
-  today.setHours(0);
-  today.setMinutes(0);
-  today.setSeconds(0);
-  today.setMilliseconds(0);
-  var scheduleTime = new Date(1970, 0, 1, today.getHours(), safeMinutes, 0, 0);
-  console.log(direction);
+  var results = [];
+  var date = new Date();
+  var today = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0,0));
   
+  var MS_PER_MINUTE = 60000;
+
+  var scheduleTime = new Date(1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0);
+  scheduleTime = new Date(scheduleTime.getTime() - 5 * MS_PER_MINUTE);
+
   async.waterfall([
       function(wfcallback) {
-          schemas.DirectedRoute.find({direction: direction}, function(err, route) {
+          schemas.DirectedRoute.findOne({direction: direction}, function(err, route) {
               wfcallback(null, route);
           });
       },
       function(route, wfcallback) {
-        schemas.Record.find({direction: direction, date: today}).populate('rides').exec(
+          schemas.Stop.findOne({_id: depId}, function(err, stop) {
+              wfcallback(null, route, stop.stopName);
+          });
+      },
+      function(route, stopName, wfcallback) {
+        schemas.Record.findOne({directedRoute: route._id, date: today}).populate('rides').exec(
           function(err, record) {
-            results.line = route.lineName;
-            results.direction = route.direction;
-            results.schedules = [];
             if(record) {
-              wfcallback(null, record.rides);
+              wfcallback(null, route, stopName, record.rides);
             } else {
-              var query = schemas.Ride.find({directedRoute: route._id})
-                  .where('schedules').elemMatch(function (elem) {
-                    elem.where('stop', depId);
-                    elem.where('scheduleTime').gte(scheduleTime);
-                  })
-                  .where('schedules').elemMatch(function (elem) {
-                    elem.where('stop', arrId);
-                    elem.where('scheduleTime').gt(scheduleTime);
-                  });
-
-              query.exec(function(err, result) {
-                  // console.log(result);
-                  // console.log(route);
-                  wfcallback(err, results);
-              });
+              callback(null);
+              return;
             }
-          }
-        );
+          });
       }
-  ], function (err, rides) {
-      for(var i = 0; i < rides; i++) {
+  ], function (err, route, stopName, rides) {
+      for(var i = 0; i < rides.length; i++) {
         var result = {};
+        result.lineName = route.lineName;
+        result.depStop = stopName;
+        result.direction = route.direction;
+        result.directionDisplay = route.directionDisplay;
+        result.schedules = [];
         var depfound = false;
-        for (var j = 0; j < ride[i].schedules.length; j++) {
-          var currSchedule = ride[i].schedules[j];
+        for (var j = 0; j < rides[i].schedules.length; j++) {
+          var currSchedule = rides[i].schedules[j];
           if(!depfound) {
-            if(currSchedule.stop == depId && currSchedule.scheduleTime >= scheduleTime) {
-              result.dep = currSchedule.scheduleTime;
-              depfound = true;
+            if(currSchedule.stop.toString() == depId && currSchedule.scheduleTime.getTime() >= scheduleTime.getTime()) {
+              if(results.length > 0 && currSchedule.scheduleTime.getTime() == results[results.length - 1].depHour.getTime()) {
+                results[results.length - 1].doubled = true;
+                break;
+              } else {
+                result.depHour = currSchedule.scheduleTime;
+                depfound = true;
+              }
+              
             }
           } else {
-            if(currSchedule.stop == arrId && currSchedule.scheduleTime > scheduleTime) {
-              result.arr = currSchedule.scheduleTime;
-              results.schedules.push(result);
+            if(currSchedule.stop.toString() == arrId && currSchedule.scheduleTime.getTime() > scheduleTime.getTime()) {
+              result.arrHour = currSchedule.scheduleTime;
+              results.push(result);
               break;
             }
-          }
-          
+          } 
         }
       }
-      callback(results);
-  });
 
-  // var query = schemas.Line.find({})
-  //   .where('directedRoutes.direction', direction)
-  //   .all('directedRoutes.allStops', [depId, arrId])
-  //   .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
-  //     elem.where('stop', depId);
-  //     elem.where('scheduleDate').gte(today.valueOf()).lte(tomorrow.valueOf());
-  //   })
-  //   .where('directedRoutes.itineraries.rides.schedules').elemMatch(function (elem) {
-  //     elem.where('stop', arrId);
-  //     elem.where('scheduleDate').gt(today.valueOf()).lte(tomorrow.valueOf());
-  //   });
+      if(results.length > 5) {
+        results = results.splice(0,5);
+      }
+      callback(null, results);
+  });
 };
 
 DataProvider.prototype.setDirectedRoute = function(update, callback) {
+  var stops = [];
+  var itins = [];
+
+  for(var i = 0; i < update.allStops.length; i++) {
+    stops.push(update.allStops[i]._id);
+  }
+  for(var i = 0; i < update.itineraries.length; i++) {
+    itins.push(update.itineraries[i]._id);
+  }
+
   schemas.DirectedRoute.findOne({_id: update._id}, function(err, line) {
     if(!err) {
-        line = update;
+        line.direction = update.direction;
+        line.directionDisplay = update.directionDisplay;
+        line.originalDirectionId = update.originalDirectionId;
+        line.lineName = update.lineName;
+        line.lineOriginalId = update.lineOriginalId;
+        line.allStops = stops;
+        line.itineraries = itins;
         line.save(function(err) {
           callback(err);
         });
@@ -312,27 +313,49 @@ DataProvider.prototype.setItinerary = function(itinerary, callback) {
   schemas.Itinerary.findOne({_id: itinerary._id}, function(err, itin) {
     if(!err) {
       if(itin) {
-        itin.stopsOrder = itinerary.stopsOrder;
+        console.log("itinerary found");
+        itin.stopOrder = itinerary.stopOrder;
         itin.rides = itinerary.rides;
         itin.save(function(err, dbitin) {
           callback(err, dbitin);
         });
       } else {
-        if(itinerary._id === null) {
-          itinerary._id = mongoose.Types.ObjectId();
+        var ridesIds = [];
+        for(var i = 0; i < itinerary.rides.length; i++) {
+          ridesIds.push(itinerary.rides[i]._id);
         }
+        var newitin = {};
+        newitin.rides = ridesIds;
+        newitin.stopOrder = itinerary.stopOrder;
+        newitin._id = itinerary._id;
         schemas.Itinerary.create(itinerary, function (err, dbitin) {
               if (err) {
                 console.log("error" + err);
               } else {
                 console.log("itinerary created");
               }
-              console.log(dbitin);
               callback(err, dbitin);
         });
       }
     }
   });
 };
+
+DataProvider.prototype.printData = function(callback) {
+  schemas.DirectedRoute.findOne({lineName: "230", direction:"fromSophia"}).populate('itineraries').exec(
+    function (err, result) {
+        var options = {
+          path: 'rides'
+        };
+        schemas.Itinerary.populate(result.itineraries, {path: 'rides'}, function (err, docs) {
+          callback(docs);
+        })
+    }
+  ) 
+}
+
+DataProvider.prototype.getId = function() {
+  return mongoose.Types.ObjectId();
+}
 
 exports.DataProvider = DataProvider;
