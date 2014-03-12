@@ -3,7 +3,7 @@
 var express = require("express"),
     http = require("http"),
     jade = require("jade"),
-    port = (process.env.PORT || 8001),
+    port = (process.env.PORT || 8080),
     DataProvider = require('./dataProvider').DataProvider,
     server = module.exports = express(),
     request = require('request'),
