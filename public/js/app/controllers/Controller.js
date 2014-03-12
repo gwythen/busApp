@@ -1,4 +1,4 @@
-define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView', 'views/NextBusView', 'models/BusSearch', 'models/Errormessage', 'views/ErrorView', 'views/SwipableLayout', 'views/LoadingView'],
+define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView', 'views/NextBusView', 'models/BusSearch', 'models/ErrorMessage', 'views/ErrorView', 'views/SwipableLayout', 'views/LoadingView'],
     function (App, Backbone, Marionette, WelcomeView, HeaderView, NextBusView, BusSearch, ErrorMessage, ErrorView, SwipableLayout, LoadingView) {
     return Backbone.Marionette.Controller.extend({
         initialize:function (options) {
