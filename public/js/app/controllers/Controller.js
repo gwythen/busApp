@@ -10,7 +10,8 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
             if(this.search.hasParameters()) {
                 this.fetchResults();
             } else {
-                this.settings();
+                //this.settings();
+                App.appRouter.navigate("/settings", true);
             }
         },
 

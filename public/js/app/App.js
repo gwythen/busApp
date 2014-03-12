@@ -16,9 +16,12 @@ define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars'],
 
         App.mobile = isMobile();
 
-        App.addInitializer(function (options) {
-            Backbone.history.start();
+        App.vent.on("routing:started", function() {
+            Backbone.history.start({pushstate: true});
         });
+        // App.addInitializer(function (options) {
+        //     Backbone.history.start();
+        // });
         
         // handles links
         App.addInitializer(function setupLinks () {
@@ -26,7 +29,7 @@ define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars'],
               ev.preventDefault();
               var clicked = $(ev.currentTarget),
                 route = clicked.attr('href');
-              App.nav.navigate(route, true);
+              App.appRouter.navigate(route, true);
             };
 
           $(document).on('click', 'a[data-applink]', handleAppLink, App);

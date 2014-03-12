@@ -51,5 +51,6 @@ require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "jquer
         App.appRouter = new AppRouter({
             controller:new Controller()
         });
+        App.vent.trigger("routing:started");
         App.start();
     });
