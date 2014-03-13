@@ -11,7 +11,8 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
                 this.fetchResults();
             } else {
                 //this.settings();
-                App.appRouter.navigate("/settings", true);
+                App.appRouter.navigate("/settings");
+                this.settings();
             }
         },
 
