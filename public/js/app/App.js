@@ -16,12 +16,9 @@ define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars'],
 
         App.mobile = isMobile();
 
-        App.vent.on("routing:started", function() {
-            Backbone.history.start({pushstate: true});
+        App.addInitializer(function (options) {
+            Backbone.history.start();
         });
-        // App.addInitializer(function (options) {
-        //     Backbone.history.start();
-        // });
         
         // handles links
         App.addInitializer(function setupLinks () {
