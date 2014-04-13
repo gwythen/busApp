@@ -17,16 +17,16 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                 this.toggleButton();
 
                 var depStops = new Bloodhound({
-                  datumTokenizer: function(d) { 
-                        return Bloodhound.tokenizers.whitespace(d.name); 
+                  datumTokenizer: function(d) {
+                        return Bloodhound.tokenizers.whitespace(d.name);
                     },
                     queryTokenizer: Bloodhound.tokenizers.whitespace,
                     local: Stops.out.toJSON()
                 });
                 
                 var arrStops = new Bloodhound({
-                  datumTokenizer: function(d) { 
-                        return Bloodhound.tokenizers.whitespace(d.name); 
+                  datumTokenizer: function(d) {
+                        return Bloodhound.tokenizers.whitespace(d.name);
                     },
                     queryTokenizer: Bloodhound.tokenizers.whitespace,
                     local: Stops.out.toJSON()
@@ -53,9 +53,25 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     var returnStop = self.searchReturnStop(datum);
                     self.saveValue(returnStop, "inArrStop");
                 });
+                $('#retDepStop .typeahead').typeahead(null, {
+                  displayKey: 'name',
+                  source: arrStops.ttAdapter()
+                }).on('typeahead:selected', function (obj, datum) {
+                    console.log(datum);
+                    self.saveValue(datum, "inDepStop");
+                });
+                $('#retArrStop .typeahead').typeahead(null, {
+                  displayKey: 'name',
+                  source: depStops.ttAdapter()
+                }).on('typeahead:selected', function (obj, datum) {
+                    console.log(datum);
+                    self.saveValue(datum, "inArrStop");
+                });
                 if(this.model.hasParameters()) {
                     $('#depStop .typeahead').typeahead('val', this.model.get("outDepStop").name);
                     $('#arrStop .typeahead').typeahead('val', this.model.get("outArrStop").name);
+                    $('#retDepStop .typeahead').typeahead('val', this.model.get("inDepStop").name);
+                    $('#retArrStop .typeahead').typeahead('val', this.model.get("inArrStop").name);
                     $('#depStop .typeahead').typeahead('close');
                     $('#arrStop .typeahead').typeahead('close');
                 }

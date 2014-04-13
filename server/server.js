@@ -330,6 +330,7 @@ checkRideExistence = function(allItineraries, currRide, callback){
 
 parseTimetable = function(body, stops, callback) {
     var subWindow = jsdom(body).createWindow();
+    subWindow.Image = function () { };
     var $ = require('jquery').create(subWindow);
     var rows = $("tbody tr[class^='row']");
     var columns = $(rows[0]).children(".horaire");
