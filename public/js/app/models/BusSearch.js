@@ -24,8 +24,8 @@ define([
         arrStop = this.get("outArrStop").id;
         direction = "toSophia";
       } else {
-        arrStop = this.get("inDepStop").id;
-        depStop = this.get("inArrStop").id;
+        depStop = this.get("inDepStop").id;
+        arrStop = this.get("inArrStop").id;
         direction = "fromSophia";
       }
       url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=230" + "&direction="+ direction;
