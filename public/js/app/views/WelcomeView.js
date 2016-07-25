@@ -32,8 +32,26 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     local: Stops.in.toJSON()
                 });
 
+                var retDepStops = new Bloodhound({
+                  datumTokenizer: function(d) {
+                        return Bloodhound.tokenizers.whitespace(d.name);
+                    },
+                    queryTokenizer: Bloodhound.tokenizers.whitespace,
+                    local: Stops.in.toJSON()
+                });
+                
+                var retArrStops = new Bloodhound({
+                  datumTokenizer: function(d) {
+                        return Bloodhound.tokenizers.whitespace(d.name);
+                    },
+                    queryTokenizer: Bloodhound.tokenizers.whitespace,
+                    local: Stops.in.toJSON()
+                });
+
                 depStops.initialize();
                 arrStops.initialize();
+                retDepStops.initialize();
+                retArrStops.initialize();
                 var self = this;
                 $('#depStop .typeahead').typeahead(null, {
                   displayKey: 'name',
@@ -53,14 +71,14 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                 });
                 $('#retDepStop .typeahead').typeahead(null, {
                   displayKey: 'name',
-                  source: arrStops.ttAdapter()
+                  source: retDepStops.ttAdapter()
                 }).on('typeahead:selected', function (obj, datum) {
                     console.log(datum);
                     self.saveValue(datum, "inDepStop");
                 });
                 $('#retArrStop .typeahead').typeahead(null, {
                   displayKey: 'name',
-                  source: arrStops.ttAdapter()
+                  source: retArrStops.ttAdapter()
                 }).on('typeahead:selected', function (obj, datum) {
                     console.log(datum);
                     self.saveValue(datum, "inArrStop");
@@ -72,6 +90,8 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     $('#retArrStop .typeahead').typeahead('val', this.model.get("inArrStop").name);
                     $('#depStop .typeahead').typeahead('close');
                     $('#arrStop .typeahead').typeahead('close');
+                    $('#retDepStop .typeahead').typeahead('close');
+                    $('#retArrStop .typeahead').typeahead('close');
                 }
             },
 
