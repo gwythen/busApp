@@ -1,0 +1,332 @@
+[
+   {
+      "stopName":"Sophia - Gare routière",
+      "longitude":7.0374694808069069,
+      "latitude":43.623875792838604,
+      "originalId":620560,
+      "logicalId":2467,
+      "localityCode":"06152",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Les Cardoulines",
+      "longitude":7.0422543781822853,
+      "latitude":43.625774547902509,
+      "originalId":620581,
+      "logicalId":2472,
+      "localityCode":"06152",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Garbejaire",
+      "longitude":7.0450079922118061,
+      "latitude":43.623304537218523,
+      "originalId":620582,
+      "logicalId":2466,
+      "localityCode":"06152",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Pompidou",
+      "longitude":7.0495211038716477,
+      "latitude":43.624521493631178,
+      "originalId":620583,
+      "logicalId":2480,
+      "localityCode":"06152",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Les Bruscs",
+      "longitude":7.0534486036064727,
+      "latitude":43.626898365416857,
+      "originalId":620584,
+      "logicalId":2471,
+      "localityCode":"06152",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Eganaude",
+      "longitude":7.0575978894819658,
+      "latitude":43.622980438159658,
+      "originalId":620585,
+      "logicalId":812,
+      "localityCode":"06018",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"La Bouillide",
+      "longitude":7.055593711614212,
+      "latitude":43.619700380328396,
+      "originalId":620588,
+      "logicalId":811,
+      "localityCode":"06152",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Sophie Laffite",
+      "longitude":7.0544688827270612,
+      "latitude":43.615436477633253,
+      "originalId":620553,
+      "logicalId":2482,
+      "localityCode":"06152",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Skema (Céram)",
+      "longitude":7.0554645132726037,
+      "latitude":43.614258478318938,
+      "originalId":620552,
+      "logicalId":3647,
+      "localityCode":"06152",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Les Belugues",
+      "longitude":7.0581101741643906,
+      "latitude":43.6176545594459,
+      "originalId":620591,
+      "logicalId":810,
+      "localityCode":"06018",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"A.Caquot",
+      "longitude":7.0605877640127011,
+      "latitude":43.617042047966066,
+      "originalId":620590,
+      "logicalId":1116,
+      "localityCode":"06018",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Inria",
+      "longitude":7.0685843088088109,
+      "latitude":43.61656613546414,
+      "originalId":620589,
+      "logicalId":1118,
+      "localityCode":"06018",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Les Templiers",
+      "longitude":7.072972008718815,
+      "latitude":43.616869156022418,
+      "originalId":620586,
+      "logicalId":1121,
+      "localityCode":"06018",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Les Chappes",
+      "longitude":7.0799518345573036,
+      "latitude":43.615032273728318,
+      "originalId":620587,
+      "logicalId":1120,
+      "localityCode":"06018",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Santoline",
+      "longitude":7.2013644526214966,
+      "latitude":43.675481794930718,
+      "originalId":600129,
+      "logicalId":26,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Aéroport / Promenade",
+      "longitude":7.211374724314,
+      "latitude":43.666457724266081,
+      "originalId":600011,
+      "logicalId":1611,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"La Vallière / Promenade",
+      "longitude":7.2235564915224844,
+      "latitude":43.670789049064879,
+      "originalId":600639,
+      "logicalId":1836,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Ferber / Promenade",
+      "longitude":7.2279140578763563,
+      "latitude":43.675302096599609,
+      "originalId":600978,
+      "logicalId":1975,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Fabron / Promenade",
+      "longitude":7.23852779363483,
+      "latitude":43.686898546813332,
+      "originalId":600401,
+      "logicalId":1761,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Magnan / Promenade",
+      "longitude":7.24656812235207,
+      "latitude":43.690910862565033,
+      "originalId":600893,
+      "logicalId":1925,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Gambetta / Promenade",
+      "longitude":7.2555458568013043,
+      "latitude":43.693547123879654,
+      "originalId":600449,
+      "logicalId":1777,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Albert 1er/Phocéens",
+      "longitude":7.2692170400374021,
+      "latitude":43.695329375498957,
+      "originalId":600012,
+      "logicalId":1614,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Cathédrale - Vieille Ville",
+      "longitude":7.2763645153271481,
+      "latitude":43.698452704552146,
+      "originalId":601426,
+      "logicalId":338,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Fontaine du Temple",
+      "longitude":7.2555521218037677,
+      "latitude":43.72610439307288,
+      "originalId":600709,
+      "logicalId":171,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Mistral",
+      "longitude":7.2521786467260974,
+      "latitude":43.725293950992992,
+      "originalId":600937,
+      "logicalId":229,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Goiran",
+      "longitude":7.2499146922690549,
+      "latitude":43.724099822664456,
+      "originalId":600474,
+      "logicalId":1782,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Deux Avenues",
+      "longitude":7.2518947978282453,
+      "latitude":43.719560822592094,
+      "originalId":600325,
+      "logicalId":75,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Cyrnos",
+      "longitude":7.2539526710420281,
+      "latitude":43.715063285314152,
+      "originalId":600304,
+      "logicalId":1726,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"PN Gambetta",
+      "longitude":7.2558934576381509,
+      "latitude":43.710363887555133,
+      "originalId":601063,
+      "logicalId":259,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Vernier / Gambetta",
+      "longitude":7.2560125760703205,
+      "latitude":43.707287346668409,
+      "originalId":601349,
+      "logicalId":2098,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Thiers / Gambetta",
+      "longitude":7.2568159045599909,
+      "latitude":43.701928154196914,
+      "originalId":601297,
+      "logicalId":2079,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Alsace-Lorraine",
+      "longitude":7.2561874527988088,
+      "latitude":43.69795798447494,
+      "originalId":600021,
+      "logicalId":1618,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   },
+   {
+      "stopName":"Gambetta / France",
+      "longitude":7.2563424359770048,
+      "latitude":43.696446909010781,
+      "originalId":600452,
+      "logicalId":1776,
+      "localityCode":"06088",
+      "operatorId":9,
+      "operatorName":"LIGNES d\u0027AZUR - CG06"
+   }
+]

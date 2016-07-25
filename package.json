@@ -1,7 +1,7 @@
 {
   "name": "busapp",
   "title": "Never miss the bus again",
-  "description": "This is an App to chekc the bus info",
+  "description": "This is an App to check the bus info",
   "version": "1.0.0",
   "homepage": "",
   "author": {
@@ -13,24 +13,25 @@
     "type": "git",
     "url": "git@github.com:gwythen/busApp.git"
   },
-  "devDependencies": {
-    "express": "3.x",
-    "grunt-contrib-compass": "~0.3.0",
-    "grunt-contrib-jshint": "~0.6.0",
-    "grunt-contrib-requirejs": "~0.4.1",
-    "grunt-contrib-watch": "~0.4.4",
-    "grunt-contrib-jasmine": "~0.5.2",
-    "grunt-jsbeautifier": "~0.2.3",
-    "jsdom": "*",
-    "request": "*",
-    "jquery": "~1.8.3",
-    "jade": "*",
-    "async": "*",
-    "mongoose": "*",
-    "moment": "*"
-  },
   "main": "./server/server",
   "keywords": [
     "BusApp"
-  ]
+  ],
+  "dependencies": {
+    "async": "*",
+    "express": "3.x",
+    "grunt-contrib-compass": "*",
+    "grunt-contrib-jasmine": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-contrib-requirejs": "*",
+    "grunt-contrib-watch": "*",
+    "grunt-jsbeautifier": "*",
+    "jquery": "*",
+    "jsdom": "*",
+    "lodash": "^4.13.1",
+    "moment": "*",
+    "mysql": "^2.11.1",
+    "pug": "^2.0.0-beta4",
+    "request": "*"
+  }
 }

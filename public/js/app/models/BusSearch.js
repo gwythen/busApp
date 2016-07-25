@@ -22,13 +22,11 @@ define([
       if(now.getHours() <= 12) {
         depStop = this.get("outDepStop").id;
         arrStop = this.get("outArrStop").id;
-        direction = "toSophia";
       } else {
-        arrStop = this.get("inDepStop").id;
-        depStop = this.get("inArrStop").id;
-        direction = "fromSophia";
+        depStop = this.get("inDepStop").id;
+        arrStop = this.get("inArrStop").id;
       }
-      url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=230" + "&direction="+ direction;
+      url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=230";
       return url;
   },
   initialize: function() {

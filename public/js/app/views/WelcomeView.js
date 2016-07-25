@@ -29,7 +29,7 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                         return Bloodhound.tokenizers.whitespace(d.name);
                     },
                     queryTokenizer: Bloodhound.tokenizers.whitespace,
-                    local: Stops.out.toJSON()
+                    local: Stops.in.toJSON()
                 });
 
                 depStops.initialize();
@@ -42,16 +42,14 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     console.log(datum);
                     self.saveValue(datum, "outDepStop");
                     var returnStop = self.searchReturnStop(datum);
-                    self.saveValue(returnStop, "inDepStop");
                 });
                 $('#arrStop .typeahead').typeahead(null, {
                   displayKey: 'name',
-                  source: arrStops.ttAdapter()
+                  source: depStops.ttAdapter()
                 }).on('typeahead:selected', function (obj, datum) {
                     console.log(datum);
                     self.saveValue(datum, "outArrStop");
                     var returnStop = self.searchReturnStop(datum);
-                    self.saveValue(returnStop, "inArrStop");
                 });
                 $('#retDepStop .typeahead').typeahead(null, {
                   displayKey: 'name',
@@ -62,7 +60,7 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                 });
                 $('#retArrStop .typeahead').typeahead(null, {
                   displayKey: 'name',
-                  source: depStops.ttAdapter()
+                  source: arrStops.ttAdapter()
                 }).on('typeahead:selected', function (obj, datum) {
                     console.log(datum);
                     self.saveValue(datum, "inArrStop");
