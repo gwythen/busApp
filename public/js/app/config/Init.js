@@ -14,7 +14,8 @@ require.config({
         // Plugins
         "backbone.validateAll":"../libs/plugins/Backbone.validateAll",
         "bootstrap":"../libs/plugins/bootstrap",
-        "typeahead":"../libs/plugins/typeahead",
+        "typeahead":"../libs/plugins/typeahead.jquery",
+        "bloodhound":"../libs/plugins/bloodhound",
         "text":"../libs/plugins/text",
         "swiper": "../libs/idangerous.swiper",
     },
@@ -23,6 +24,10 @@ require.config({
         "bootstrap":["jquery"],
         "jqueryui":["jquery"],
         "typeahead":["jquery"],
+        "bloodhound": {
+           "deps": ['jquery'],
+           "exports": 'Bloodhound'
+        },
         "backbone":{
             "deps":["underscore"],
             // Exports the global window.Backbone object
@@ -46,7 +51,7 @@ require.config({
 });
 
 // Includes Desktop Specific JavaScript files here (or inside of your Desktop router)
-require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "jqueryui", "typeahead", "bootstrap", "swiper", "backbone.validateAll"],
+require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "jqueryui", "typeahead", "bloodhound","bootstrap", "swiper", "backbone.validateAll"],
     function (App, AppRouter, Controller) {
         App.appRouter = new AppRouter({
             controller:new Controller()

@@ -27,14 +27,12 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     }
                 });
 
-                var allStops = this.getAllStops();
-
                 this.depStops = new Bloodhound({
                   datumTokenizer: function(d) {
                         return Bloodhound.tokenizers.whitespace(d.stopname);
                     },
                     queryTokenizer: Bloodhound.tokenizers.whitespace,
-                    local: allStops
+                    local: Stops.out.toJSON()
                 });
                 
                 this.arrStops = new Bloodhound({
@@ -42,28 +40,32 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                         return Bloodhound.tokenizers.whitespace(d.stopname);
                     },
                     queryTokenizer: Bloodhound.tokenizers.whitespace,
-                    local: allStops
+                    local: Stops.in.toJSON()
                 });
 
+                this.retDepStops = new Bloodhound({
+                  datumTokenizer: function(d) {
+                        return Bloodhound.tokenizers.whitespace(d.stopname);
+                    },
+                    queryTokenizer: Bloodhound.tokenizers.whitespace,
+                    local: Stops.in.toJSON()
+                });
+                
+                this.retArrStops = new Bloodhound({
+                  datumTokenizer: function(d) {
+                        return Bloodhound.tokenizers.whitespace(d.stopname);
+                    },
+                    queryTokenizer: Bloodhound.tokenizers.whitespace,
+                    local: Stops.in.toJSON()
+                });
 
                 this.busLines.initialize();
                 this.depStops.initialize();
                 this.arrStops.initialize();
-
-                this.initializeAutocompletes();
-                
-                if(this.model.hasParameters()) {
-                    $('#line .typeahead').typeahead('val', this.model.get("line").linename);
-                    $('#depStop .typeahead').typeahead('val', this.model.get("depStop").stopname);
-                    $('#arrStop .typeahead').typeahead('val', this.model.get("arrStop").stopname);
-
-                    $('#depStop .typeahead').typeahead('close');
-                    $('#arrStop .typeahead').typeahead('close');
-                }
-            },
-
-            initializeAutocompletes: function() {
+                this.retDepStops.initialize();
+                this.retArrStops.initialize();
                 var self = this;
+
                 $('#line .typeahead').typeahead(null, {
                   displayKey: 'linename',
                   source: this.busLines.ttAdapter()
@@ -71,25 +73,57 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     console.log(datum);
                     self.saveValue(datum, "line");
                     //fetch stops
+
                     self.fetchResults(datum.id);
                 });
+
+                self.initializeAutocompletes();
+                
+                if(this.model.hasParameters()) {
+                    $('#line .typeahead').typeahead('val', this.model.get("line").linename);
+                    $('#depStop .typeahead').typeahead('val', this.model.get("outDepStop").stopname);
+                    $('#arrStop .typeahead').typeahead('val', this.model.get("outArrStop").stopname);
+                    $('#retDepStop .typeahead').typeahead('val', this.model.get("inDepStop").stopname);
+                    $('#retArrStop .typeahead').typeahead('val', this.model.get("inArrStop").stopname);
+                    $('#depStop .typeahead').typeahead('close');
+                    $('#arrStop .typeahead').typeahead('close');
+                    $('#retDepStop .typeahead').typeahead('close');
+                    $('#retArrStop .typeahead').typeahead('close');
+                }
+            },
+
+            initializeAutocompletes: function() {
+                var self = this;
                 $('#depStop .typeahead').typeahead(null, {
                   displayKey: 'stopname',
                   source: this.depStops.ttAdapter()
                 }).on('typeahead:selected', function (obj, datum) {
                     console.log(datum);
-                    self.saveValue(datum, "depStop");
-                    //var returnStop = self.searchReturnStop(datum);
+                    self.saveValue(datum, "outDepStop");
+                    var returnStop = self.searchReturnStop(datum);
                 });
                 $('#arrStop .typeahead').typeahead(null, {
                   displayKey: 'stopname',
                   source: this.depStops.ttAdapter()
                 }).on('typeahead:selected', function (obj, datum) {
                     console.log(datum);
-                    self.saveValue(datum, "arrStop");
-                    //var returnStop = self.searchReturnStop(datum);
+                    self.saveValue(datum, "outArrStop");
+                    var returnStop = self.searchReturnStop(datum);
                 });
-                
+                $('#retDepStop .typeahead').typeahead(null, {
+                  displayKey: 'stopname',
+                  source: this.retDepStops.ttAdapter()
+                }).on('typeahead:selected', function (obj, datum) {
+                    console.log(datum);
+                    self.saveValue(datum, "inDepStop");
+                });
+                $('#retArrStop .typeahead').typeahead(null, {
+                  displayKey: 'stopname',
+                  source: this.retArrStops.ttAdapter()
+                }).on('typeahead:selected', function (obj, datum) {
+                    console.log(datum);
+                    self.saveValue(datum, "inArrStop");
+                });
             },
 
             saveValue: function(value, type) {
@@ -130,26 +164,19 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                 }).done(function (data) {
                     Stops.out.reset(data[1]);
                     Stops.in.reset(data[2]);
-                    var stops = that.getAllStops();
                     that.depStops.clear();
-                    that.arrStops.clear();      
-                    that.depStops.local = stops;
-                    that.arrStops.local = stops;
+                    that.arrStops.clear();
+                    that.retDepStops.clear();
+                    that.retArrStops.clear();
+                    that.depStops.local = Stops.out.toJSON();
+                    that.arrStops.local = Stops.out.toJSON();
+                    that.retDepStops.local = Stops.in.toJSON();
+                    that.retArrStops.local = Stops.in.toJSON();
                     that.depStops.initialize(true);
                     that.arrStops.initialize(true);
+                    that.retDepStops.initialize(true);
+                    that.retArrStops.initialize(true);                      
                 });
-            },
-            getAllStops: function() {
-                var all = Stops.out.toJSON().concat(Stops.in.toJSON());
-
-                var allStops = _.reduce(all, function(result, value, key) {
-                    var res =_.find(result, function(o) { return o.logicalid == value.logicalid; });
-                   if(res === undefined) {
-                    result.push(value);
-                   }
-                  return result;
-                }, []);
-                return allStops;
             }
 
         });

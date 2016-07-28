@@ -1,12 +1,14 @@
 var moment = require('moment'),
     request = require('request'),
     jsdom = require('jsdom').jsdom,
+    parseString = require('xml2js').parseString;
     async = require('async');
-
+var DBInitializer = require('./initializeDB');
 
 BusScraper = function(DataProvider) {
 	return {
 		getWebPage: function(url, callback) {
+			console.log("fetching page " + url);
 		    // use a timeout value of 10 seconds
 		    var timeoutInMilliseconds = 10*1000;
 		    var opts = {
@@ -40,7 +42,7 @@ BusScraper = function(DataProvider) {
 				            var currIndex = 1;
 				            var maxIndex = 2;
 				            var totalRides = [];
-				            var stopName = stop.stopName;
+				            var stopName = stop.stopname;
 				            var MS_PER_MINUTE = 60000;
 				            var results = [];
 
@@ -117,9 +119,6 @@ BusScraper = function(DataProvider) {
 				                                loopCallback();
 				                            });
 				                        }, function(err) {
-				                            if(results.length > 5) {
-				                                results = results.splice(0,5);
-				                            }
 				                            mainCallback(results);
 				                        });
 				                    }  else {
@@ -240,8 +239,182 @@ BusScraper = function(DataProvider) {
 			    DataProvider.setRecord(record, function(err, item){} );
 			    callback();
 			}
+		},
+		getAllLines: function(topCallback) {
+			var that = this;
+			var url = "http://www.ceparou06.fr/horaires_ligne/?rub_code=6&part_id=";
+			//Networks have part_id starting from 2 to 7
+			var currIndex = 2;
+			var maxIndex = 7;
+			var allLines = [];
+			async.doWhilst(
+                function (docallback) {
+                    async.waterfall([
+                        function(callback) {
+                            that.getWebPage(url+currIndex, function(body) {
+                                callback(null, body);
+                            });
+                        },
+                        function(body, callback) {
+                            that.parseNetwork(body, function(linesLinks) {
+                                callback(null, linesLinks);
+                            });
+                        },
+                        function(linesLinks, callback) {
+                            that.parseLines(linesLinks, function(err, lines) {
+                                callback(null, lines);
+                            });
+                        }
+  						
+                    ], function (err, lines) {
+                    	allLines = allLines.concat(lines);
+                    	currIndex++;
+                        docallback();
+                    });
+                },
+                function () { return currIndex <= maxIndex; },
+                function (err) {
+                	//We still need to process the CG06 lines, that are not listed on the ceparou06 site
+                	var linesLinks = DBInitializer.getCG06Links();
+                	console.log("--------------parsing CG06 Lines--------------");
+                	that.parseLines(linesLinks, function(err, lines) {
+                		allLines = allLines.concat(lines);
+                        topCallback(err, allLines);
+                    });	
+                }
+            )
+		},
+		parseNetwork: function(body, callback) {
+			var subWindow = jsdom(body).defaultView;
+		    subWindow.Image = function () { };
+		    var $ = require('jquery')(subWindow);
+
+		    var lines = [];
+		    $('#lineList .lig').find('a').each(function() {
+		    	var link = $(this).attr('href');
+		    	if (lines.indexOf(link) == -1) {
+			        lines.push(link);
+			    } 
+			});
+			console.log(lines);
+			callback(lines);
+		},
+		parseLines: function(linesLinks, callback) {
+			var that = this;
+			var currIndex = 0;
+			var maxIndex = linesLinks.length - 1;
+			// var maxIndex = 1;
+			var allLines = [];
+			async.doWhilst(
+                function (docallback) {
+                    async.waterfall([
+                        function(callback) {
+                            that.getWebPage("http://www.ceparou06.fr/horaires_ligne/" + linesLinks[currIndex], function(body) {
+                                callback(null, body);
+                            });
+                        },
+                        function(body, callback) {
+                        	console.log("parsing page " + linesLinks[currIndex]);
+                            that.parseLine(body, linesLinks[currIndex], function(err, line) {
+                                callback(null, line);
+                            });
+                        }  						
+                    ], function (err, line) {
+                    	allLines.push(line);
+                    	
+                    	currIndex++;
+                        docallback();
+                    });
+                },
+                function () { return currIndex <= maxIndex; },
+                function (err) {
+                	console.log(allLines);
+                	callback(err, allLines);
+                }
+            )
+		},
+		parseLine: function(body, link, docallback) {
+			var that = this;
+			var line = {};
+			var subWindow = jsdom(body).defaultView;
+		    subWindow.Image = function () { };
+		    var $ = require('jquery')(subWindow);
+
+		    line.lineoriginalid = link.split("lign_id=")[1];
+		    line.linename = $($("#navigation span")[2]).text();
+		    line.directions = {};
+		    async.each([1,2], function(direction, callback) {
+		    	line.directions[direction] = {};
+			    line.directions[direction].name = $('label[for="sens' + direction + '"]').html();
+			    that.getLineStops(line.lineoriginalid, direction, function(stops) {
+			    	line.directions[direction].stops = stops;
+			    	callback();
+			    });
+			}, function(err) {
+			    // if any of the file processing produced an error, err would equal that error
+			    if( err ) {
+			      // One of the iterations produced an error.
+			      console.log('something was wrong');
+			    } else {
+			   		console.log('Got a line!');
+			      console.log(line);
+			      docallback(err, line);
+			    }
+			});
+		},
+
+		getLineStops: function(lineid, directionid, docallback) {
+			var that = this;
+			console.log("getting stops for line: " + lineid + " direction: " + directionid);
+			var mOptions = {
+			    url: "http://www.ceparou06.fr/WebServices/JsonService/JSONService.asmx/getStopPointsBylineDirection",
+			    json: {UID: "TSI006", idLine: lineid, direction: directionid},
+			    processData: false,
+			    contentType: "application/json",
+			    type: "POST"
+			  }
+			  request.post(mOptions, function(error, response, body) {
+			      that.parseStops(response, docallback);
+			  });
+		},
+		parseStops: function(response, callback) {
+			var stops = JSON.parse(JSON.stringify(response)).body;
+			if(stops.length > 0) {
+				stops.forEach(function(stop) {
+					delete stop['__type'];
+					delete stop['description'];
+					delete stop['categorie'];
+					delete stop['LocalityName'];
+					delete stop['listLines'];
+					delete stop['type'];
+					delete stop['idNetwork'];
+					delete stop['networkName'];
+					delete stop['returnCode'];
+					delete stop['idLink'];
+					objRename(stop, "title", "stopname");
+					objRename(stop, "id", "originalid");
+					objRename(stop, "LocalityCode", "localitycode");
+					objRename(stop, "idOperator", "operatorid");
+					objRename(stop, "operatorName", "operatorname");
+					objRename(stop, "logicalId", "logicalid");
+				});
+			}
+			callback(stops);
 		}
 	}
+};
+
+var objRename = function (obj, oldName, newName) {
+     // Do nothing if the names are the same
+     if (oldName == newName) {
+         return obj;
+     }
+    // Check for the old property name to avoid a ReferenceError in strict mode.
+    if (obj.hasOwnProperty(oldName)) {
+        obj[newName] = obj[oldName];
+        delete obj[oldName];
+    }
+    return obj;
 };
 
 exports.BusScraper = BusScraper;

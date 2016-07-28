@@ -12,33 +12,29 @@ define([
     url: function() {
       var url = this.urlRoot;
       var now = new Date();
-      var depStop = {};
-      var arrStop = {};
-      var direction = "";
-      console.log(this.get("outDepStop"));
-      console.log(this.get("outArrStop"));
-      console.log(this.get("inDepStop"));
-      console.log(this.get("inArrStop"));
+      var depStop = this.get("depStop").logicalid;
+      var arrStop = this.get("arrStop").logicalid;
+      var line = this.get("line").id;
+
       if(now.getHours() <= 12) {
-        depStop = this.get("outDepStop").id;
-        arrStop = this.get("outArrStop").id;
+        depStop = this.get("depStop").logicalid;
+        arrStop = this.get("arrStop").logicalid;
       } else {
-        depStop = this.get("inDepStop").id;
-        arrStop = this.get("inArrStop").id;
+        depStop = this.get("arrStop").logicalid;
+        arrStop = this.get("depStop").logicalid;
       }
-      url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=230";
+      url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=" + line;
       return url;
   },
   initialize: function() {
-      this.set("outDepStop", null);
-      this.set("outArrStop", null);
-      this.set("inDepStop", null);
-      this.set("inArrStop", null);
+      this.set("line", null);
+      this.set("depStop", null);
+      this.set("arrStop", null);
+
       this.fetchFromLocalStorage();
-      this.on('change:outDepStop', this.setInLocalStorage, this);
-      this.on('change:outArrStop', this.setInLocalStorage, this);
-      this.on('change:inDepStop', this.setInLocalStorage, this);
-      this.on('change:inArrStop', this.setInLocalStorage, this);
+      this.on('change:line', this.setInLocalStorage, this);
+      this.on('change:depStop', this.setInLocalStorage, this);
+      this.on('change:arrStop', this.setInLocalStorage, this);
   },
   parse: function(response) {
         this.set({
@@ -47,14 +43,13 @@ define([
   },
 
   fetchFromLocalStorage: function() {
-    if(localStorage.getItem('230Stops')) {
+    if(localStorage.getItem('busApp')) {
       try {
-        var stops = JSON.parse(localStorage.getItem('230Stops'));
-        console.log(stops);
-        this.set("outDepStop", stops.outDepStop);
-        this.set("outArrStop",  stops.outArrStop);
-        this.set("inDepStop", stops.inDepStop);
-        this.set("inArrStop",  stops.inArrStop);
+        var busAppData = JSON.parse(localStorage.getItem('busApp'));
+        console.log(busAppData);
+        this.set("line", busAppData.line);
+        this.set("depStop", busAppData.outDepStop);
+        this.set("arrStop",  busAppData.outArrStop);
         return true;
       } catch (e) {
           return false;
@@ -66,19 +61,18 @@ define([
   },
   
   setInLocalStorage: function() {
-    if(this.get("outDepStop") && this.get("outArrStop") && this.get("inDepStop") && this.get("inArrStop")) {
-      var stops = {};
-      stops.outDepStop = this.get("outDepStop");
-      stops.inDepStop = this.get("inDepStop");
-      stops.outArrStop = this.get("outArrStop");
-      stops.inArrStop = this.get("inArrStop");
-      localStorage.setItem("230Stops", JSON.stringify(stops));
+    if(this.has("line") && this.get("depStop") && this.get("arrStop")) {
+      var busAppData = {};
+      busAppData.line = this.get("line");
+      busAppData.outDepStop = this.get("depStop");
+      busAppData.outArrStop = this.get("arrStop");
+      localStorage.setItem("busApp", JSON.stringify(busAppData));
     }
 
   },
   
   hasParameters: function() {
-    if(this.has("outDepStop") && this.has("outArrStop") && this.has("inDepStop") && this.has("inArrStop")) {
+    if(this.has("line") && this.has("depStop") && this.has("arrStop")) {
       return true;
     } else {
       return false;

@@ -50,13 +50,9 @@ Rides -> Schedules: one-to-many
 
 */
 
-var stops = [];
-stops[1] = require('./Stops-230-1');
-stops[2] = require('./Stops-230-2');
-
-
 module.exports = {
-	initializeDB: function(con, callback) {
+	initializeDB: function(con, busScraper, callback) {
+		this.busScraper = busScraper;
 		con.query('CREATE TABLE `lines` (' +
 	               "id int(11) NOT NULL AUTO_INCREMENT," +
 	               "linename varchar(255)," + 
@@ -182,58 +178,114 @@ module.exports = {
 	    });
 	},
 
-	initializeLine: function(linename) {
-		if(linename == "230") {
-			var line = {};
-			line.lineoriginalid = 468;
-			line.linename = linename;
-			con.query('INSERT INTO `lines` SET ?', line, function(err, res) {
-				if(err) throw err;
+	initializeLines: function() {
 
-				line.id = res.insertId;
+		this.busScraper.getAllLines(function(err, allLines) {
+			console.log(allLines);
+			allLines.forEach(function(line) {
+				var linerec = {};
+				linerec.lineoriginalid = line.lineoriginalid;
+				linerec. linename = line.linename;
+				con.query('INSERT INTO `lines` SET ?', linerec, function(err, res) {
+					if(err) throw err;
 
-				console.log('Line added: ', line.linename);
+					line.id = res.insertId;
 
-				var directedRoutes = {};
+					console.log('Line added: ', line.linename);
 
-		        //Adding the stops to the DB
-		        [1, 2].forEach(function(direction) {
-		        	
-		        	//Let's create the directed routes
-		        	console.log("line id: ", line.id);
-		        	directedRoutes[direction] = {
-		        		directionDisplay: stops[direction][stops[direction].length - 1].stopName,
-		        		directionid: direction,
-		        		line_id: line.id
-		        	};
+					var directedRoutes = {};
 
-		        	con.query('INSERT INTO `directedroutes` SET ?', directedRoutes[direction], function(err, res) {
-						if(err) throw err;
+			        //Adding the stops to the DB
+			        [1,2].forEach(function(direction) {
+			        	var linedir = line.directions[direction];
+			        	if(linedir.name) {
+			        		//Let's create the directed routes
 
-						directedRoutes[direction].id = res.insertId;
-						console.log('Route added: ', directedRoutes[direction].directionDisplay);
-					});
+				        	directedRoutes[direction] = {
+				        		directionDisplay: linedir.name,
+				        		directionid: direction,
+				        		line_id: line.id
+				        	};
 
-		        	//Then we can create the stops
-		        	stops[direction].forEach(function(stop) {
-		        		con.query('INSERT INTO `stops` SET ?', stop, function(err,res){
-						  	if(err) throw err;
-
-						  	console.log('Stop added: ', stop.stopName);
-
-						 	//For each stop, we add a stopbyroute record
-						 	var stopbyroute = {};
-						 	stopbyroute.route_id = directedRoutes[direction].id;
-						 	stopbyroute.stop_id = res.insertId;
-						  	con.query('INSERT INTO `stopsbyroute` SET ?', stopbyroute, function(err, res) {
+				        	con.query('INSERT INTO `directedroutes` SET ?', directedRoutes[direction], function(err, res) {
 								if(err) throw err;
 
-								console.log('StopByRoute added');
+								directedRoutes[direction].id = res.insertId;
+								console.log('Route added: ', directedRoutes[direction].directionDisplay);
 							});
-						});
-		        	});
+
+				        	//Then we can create the stops
+				        	linedir.stops.forEach(function(stop) {
+								
+								con.query('SELECT * FROM `stops` WHERE stopname = ? AND originalid = ?', [stop.stopname, stop.originalid] ,function(err,rows){
+								    if(err) throw err;
+
+								    if(rows.length == 0) {
+								    	//the stop doesn't exist, we add it
+								    	con.query('INSERT INTO `stops` SET ?', stop, function(err,res){
+										  	if(err) throw err;
+										  	console.log('Stop added: ', stop.stopname);
+										  	addStopByRoute(res.insertId);
+										});
+								    } else {
+								    	addStopByRoute(rows[0].id);
+								    }
+								});
+
+				        		var addStopByRoute = function(stopid) {
+				        			
+								 	//For each stop, we add a stopbyroute record
+								 	var stopbyroute = {};
+								 	stopbyroute.route_id = directedRoutes[direction].id;
+								 	stopbyroute.stop_id = stopid;
+								  	con.query('INSERT INTO `stopsbyroute` SET ?', stopbyroute, function(err, res) {
+										if(err) throw err;
+
+									});
+				        		} 
+							});
+			        	}
+			        	
+					});
 				});
-			});
-	    };
+	    	});
+		});
+	},
+	getCG06Links: function() {
+		return [
+		"index.asp?rub_code=6&part_id=2&lign_id=493",
+		"index.asp?rub_code=6&part_id=2&lign_id=498",
+		"index.asp?rub_code=6&part_id=2&lign_id=459",
+		"index.asp?rub_code=6&part_id=2&lign_id=464",
+		"index.asp?rub_code=6&part_id=2&lign_id=482",
+		"index.asp?rub_code=6&part_id=2&lign_id=497",
+		"index.asp?rub_code=6&part_id=2&lign_id=454",
+		"index.asp?rub_code=6&part_id=2&lign_id=458",
+		"index.asp?rub_code=6&part_id=2&lign_id=463",
+		"index.asp?rub_code=6&part_id=2&lign_id=468",
+		"index.asp?rub_code=6&part_id=2&lign_id=472",
+		"index.asp?rub_code=6&part_id=2&lign_id=477",
+		"index.asp?rub_code=6&part_id=2&lign_id=481",
+		"index.asp?rub_code=6&part_id=2&lign_id=467",
+		"index.asp?rub_code=6&part_id=2&lign_id=461",
+		"index.asp?rub_code=6&part_id=2&lign_id=1115",
+		"index.asp?rub_code=6&part_id=2&lign_id=601",
+		"index.asp?rub_code=6&part_id=2&lign_id=606",
+		"index.asp?rub_code=6&part_id=2&lign_id=480",
+		"index.asp?rub_code=6&part_id=2&lign_id=489",
+		"index.asp?rub_code=6&part_id=2&lign_id=491",
+		"index.asp?rub_code=6&part_id=2&lign_id=483",
+		"index.asp?rub_code=6&part_id=2&lign_id=495",
+		"index.asp?rub_code=6&part_id=2&lign_id=466",
+		"index.asp?rub_code=6&part_id=2&lign_id=486",
+		"index.asp?rub_code=6&part_id=2&lign_id=597",
+		"index.asp?rub_code=6&part_id=2&lign_id=465",
+		"index.asp?rub_code=6&part_id=2&lign_id=471",
+		"index.asp?rub_code=6&part_id=2&lign_id=494",
+		"index.asp?rub_code=6&part_id=2&lign_id=614",
+		"index.asp?rub_code=6&part_id=2&lign_id=455",
+		"index.asp?rub_code=6&part_id=2&lign_id=474",
+		"index.asp?rub_code=6&part_id=2&lign_id=685"
+		]
 	}
 }

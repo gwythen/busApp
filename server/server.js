@@ -9,7 +9,8 @@ var express = require("express"),
     request = require('request'),
     jsdom = require('jsdom').jsdom,
     async = require('async'),
-    moment = require('moment');
+    moment = require('moment'),
+    _ = require('lodash');
 
 var DataProvider = new DataProvider('localhost', 27017);
 var BusScraper = require('./busScraper').BusScraper;
@@ -40,46 +41,62 @@ var rootUrl = 'http://www.ceparou06.fr/';
 // SERVER
 // ======
 
-getLineStops = function(line, callback) {
-    DataProvider.getLineStops(line, function(error, stops){
-      if(!error) {
-        var stopsListData = {};
-        for (var line in stops ) {
-            stopsListData[line] = [];
-            stopsline = stops[line];
 
-            for(var i = 0; i < stopsline.length; i++) {
-                var newStop = {};
-                newStop.name = stopsline[i].stopname;
-                newStop.lat = stopsline[i].latitude;
-                newStop.lon = stopsline[i].longitude;
-                newStop.originalId = stopsline[i].originalid;
-                newStop.logicalId = stopsline[i].logicalid;
-                newStop.operatorId = stopsline[i].operatorid;
-                newStop.id = stopsline[i].stop_id;
-                newStop.lineid = stopsline[i].line_id;
-                newStop.directionid = stopsline[i].directionid;
-                stopsListData[line].push(newStop);
-            }
-        }
-
-        callback(stopsListData);
-      }
-    });
-};
-
-getBuses = function(depId, arrId, mainCallback) {
-    DataProvider.getBuses(depId, arrId, null, function(error, results, lineid, directionid, fetch) {
-        if(results) {
-           mainCallback(results);
-        } else {
-            if(fetch) {
-                BusScraper.scrapeBuses(depId, arrId, lineid, directionid, mainCallback);
+getBuses = function(depId, arrId, lineId, mainCallback) {
+    //First we get all the possible stops by directedroute for the line
+    DataProvider.getLineStops(lineId, function(err, stops) {
+        //Then we run getbuses on all possible directed route in sequence. -> direction1: results ? then stop, else search direction2 
+        
+        var directions = _.values(stops);
+        var finalRes = [];
+        async.eachSeries(directions, function(direction, loopCallback) {
+            var dep = _.find(direction, ['logicalid', parseInt(depId)]);
+            var arr = _.find(direction, ['logicalid', parseInt(arrId)]);
+            var route = {};
+            route.route_id = dep.route_id;
+            route.directionid = dep.directionid;
+            route.directiondisplay = dep.directiondisplay;
+            route.linename = dep.linename;
+            console.log("stops for ids " + depId + " " + arrId);
+            console.log(dep);
+            console.log(arr);
+            if(dep && arr) {
+                DataProvider.getBuses(dep.id, arr.id, route, function(error, results, fetch) {
+                    console.log("searched for buses");
+                    console.log(results);
+                    if(results) {
+                        finalRes = results;
+                        var fakeErr = new Error();
+                        fakeErr.break = true;
+                        return loopCallback(fakeErr);
+                    } else {
+                        //we only fetch if it makes sense: if we have no record for today or if we have no itinerary at all in the db
+                        if(fetch) {
+                            console.log("going to fetch itineraries");
+                            //We fetch itineraries and rides for this direction of the line
+                            BusScraper.scrapeBuses(dep.id, arr.id, lineId, dep.directionid, function(results) {
+                                finalRes = results;
+                                var fakeErr = new Error();
+                                fakeErr.break = true;
+                                return loopCallback(fakeErr);
+                            });
+                        } else {
+                            loopCallback();
+                        }
+                    }
+                });
             } else {
-                mainCallback([]);
+                loopCallback();
             }
-            
-        }
+        }, function(err) {
+            // if (err && err.break)
+            //     mainCallback(finalRes);
+            // else
+
+            console.log("returning results");
+            console.log(finalRes);
+            mainCallback(_.take(finalRes, 5));
+        });
     });
 };
 
@@ -89,30 +106,44 @@ getBuses = function(depId, arrId, mainCallback) {
 
 server.get('/api/reset/:id/:code', function(req, res) {
     if(req.params.id == "domenico" && req.params.code == 151086) {
-        DataProvider.reset(function() {
-            return res.send("done!");
-        });
+        DataProvider.reset(function() {});
+        return res.send("done!");
     } else {
         return res.send("Sorry, this action is forbidden");
     }
 });
 
 server.get('/', function(req, res) {
-    getLineStops(1, function(results){
-        return res.render('index', {stops: JSON.stringify(results)});
+    DataProvider.getLineStops(1, function(err, stops) {
+        return res.render('index', {stops: JSON.stringify(stops)});
     });
 });
 
 server.get('/api/search', function(req, res) {
-    getBuses(req.query.depStop, req.query.arrStop, function(results) {
+    getBuses(req.query.depStop, req.query.arrStop, req.query.line, function(results) {
         console.log("returning " + results.length + " results");
         return res.send(results);
     });
 });
 
+server.get('/api/searchLine/:query', function(req, res) {
+    DataProvider.searchLine(req.params.query, function(err, results) {
+        console.log("returning " + results.length + " results");
+        return res.send(results);
+    });
+});
+
+server.get('/api/getLineStops', function(req, res) {
+    console.log("fetching stops for line " + req.query.lineid);
+    DataProvider.getLineStops(req.query.lineid, function(err, stops) {
+        console.log(stops);
+        return res.send(stops);
+    });
+});
+
 server.get('*', function(req, res) {
-    getLineStops(1, function(results){
-        return res.render('index', {stops: JSON.stringify(results)});
+    DataProvider.getLineStops(1, function(err, stops) {
+        return res.render('index', {stops: JSON.stringify(stops)});
     });
 });
 

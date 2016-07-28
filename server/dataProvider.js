@@ -43,9 +43,12 @@ DataProvider.prototype.reset = function(mainCallback) {
     });
 
   });
+  
+  var BusScraper = require('./busScraper').BusScraper;
+  var BusScraper = new BusScraper(this);
 
-  DBInitializer.initializeDB(con, function() {
-    DBInitializer.initializeLine("230");
+  DBInitializer.initializeDB(con, BusScraper, function() {
+    DBInitializer.initializeLines();
   });
 }; 
 
@@ -65,6 +68,14 @@ DataProvider.prototype.getLine = function(lineName, callback) {
   });
 };
 
+DataProvider.prototype.searchLine = function(query, callback) {
+  con.query("SELECT * FROM `lines` WHERE linename LIKE " + con.escape('%'+query+'%'), function(err,rows){
+    if(err) throw err;
+
+    callback(err, rows);
+  });
+};
+
 DataProvider.prototype.getDirectedRoute = function(lineid, directionid, callback) {
   con.query('SELECT directedroutes.id as id, directiondisplay, directionid, line_id, linename, lineoriginalid ' + 
             'FROM directedroutes JOIN `lines` ON directedroutes.line_id = lines.id ' + 
@@ -75,14 +86,27 @@ DataProvider.prototype.getDirectedRoute = function(lineid, directionid, callback
   });
 };
 
+DataProvider.prototype.getLineRoutes = function(lineid, callback) {
+  console.log("line " + lineid);
+  con.query('SELECT * FROM directedroutes ' + 
+            'WHERE line_id = ?', lineid, function(err,rows) {
+    if(err) throw err;
+
+    callback(err, rows);
+  });
+};
+
 DataProvider.prototype.getLineStops = function(lineid, callback) {
-    con.query('SELECT * FROM stopsbyroute ' +
+    con.query('SELECT stops.id as id, directiondisplay, directionid, latitude, line_id, localitycode, logicalid, longitude, operatorid, operatorname, originalid, route_id, stopname, linename ' +
+      'FROM stopsbyroute ' +
       'JOIN stops ON stops.id = stopsbyroute.stop_id ' +
       'JOIN directedroutes ON stopsbyroute.route_id = directedroutes.id ' +
+      'JOIN `lines` ON directedroutes.line_id = lines.id ' + 
       'WHERE line_id = ?', lineid, function(err, rows) {
       if(err) throw err;
-
-      callback(err, _.groupBy(rows, "directionid"));
+      var stops = _.groupBy(rows, "directionid");
+      
+      callback(err, stops);
     });
 };
 
@@ -331,134 +355,121 @@ DataProvider.prototype.setItineraryStopSequence = function(items, callback) {
 };
 
 
-DataProvider.prototype.getBuses = function(depId, arrId, routeId, callback) {
+DataProvider.prototype.getBuses = function(depId, arrId, route, callback) {
   var results = [];
-  var today = moment().format('YYYY-MM-DD'); 
-  
-  var MS_PER_MINUTE = 60000;
 
+  var fetch = false;
+  console.log(route);
+  //We get all the itineraries for this route
+  con.query('SELECT id FROM itineraries ' +
+            'WHERE route_id = ?', route.route_id, function(err, rows) {
+              if(err) throw err;
+              //then find all those that have a sequence depstop/arrstop
+              if(rows.length > 0) {
+                  var iti = _.map(rows, 'id');
+                  console.log(iti);
+                  con.query('SELECT DISTINCT a.itin_id ' + 
+                    'FROM itinerarystopsequence AS a ' +
+                    'JOIN itinerarystopsequence AS b ON a.itin_id=b.itin_id ' +
+                    'WHERE a.itin_id IN (?) AND a.stop_id = ? ' + 
+                    'AND b.stop_id = ? ' +
+                    'AND b.seqnumber > a.seqnumber', [iti, depId, arrId], function(err, rows) {
+        
+                    if(err) throw err;
+
+                    if(rows.length > 0) {
+                      console.log("Found " + rows.length + " compatible itineraries");
+
+                      var itins = _.map(rows, 'itin_id');
+
+                      //Then we want all recorded schedules for rides on the target itineraries for today, 
+                      //filter those departing earlier than our deptime
+                      DataProvider.prototype.getItinerarySchedules(itins, depId, arrId, route, function(err, res, fetch) {
+                        callback(err, res, fetch);
+                      });
+                    } else {
+                      console.log("Didnt' find any itinerary with given stop sequence");
+                      //It means that the good sequence must be in the other direction
+                      fetch = false;
+                      callback(err, null, fetch);
+                    }
+                  });
+              } else {
+                console.log("No itinerary found");
+                //It probably means the databse is not populated for this route, we go fetch it
+                fetch = true;
+                callback(err, null, fetch);
+              }
+    });
+  }
+
+DataProvider.prototype.getItinerarySchedules = function(itins, depId, arrId, route, callback) {
+  var today = moment().format('YYYY-MM-DD'); 
+  var MS_PER_MINUTE = 60000;
   var scheduleTime = new Date(1970, 0, 1, moment().hours(), moment().minutes(), 0, 0);
   scheduleTime = new Date(scheduleTime.getTime() - 5 * MS_PER_MINUTE);
-  var fetch = false;
+  console.log(scheduleTime);
   
-  // If we have a route, we can do that more quickly by firstly taking the possible itineraries
-
-  // SELECT * FROM itineraries
-  // WHERE route_id = ?
-
-  //then doing the same query but with a further restriction
-
-  // SELECT DISTINCT a.itin_id 
-  // FROM itinerarystopsequence AS a
-  // JOIN itinerarystopsequence AS b ON a.itin_id=b.itin_id
-  // WHERE a.itin_id IN ? AND a.stop_id = ? 
-  //       AND b.stop_id = ? 
-  //       AND b.seqnumber > a.seqnumber 
-
-
-  // We start by finding all possible itineraries that go from depId to arrId
-
-  con.query('SELECT DISTINCT a.itin_id ' + 
-            'FROM itinerarystopsequence AS a ' +
-            'JOIN itinerarystopsequence AS b ON a.itin_id=b.itin_id ' +
-            'WHERE a.stop_id = ? AND b.stop_id = ? AND ' +
-            'b.seqnumber > a.seqnumber', [depId, arrId], function(err, rows) {
-      
+  con.query('SELECT * FROM records JOIN rides ON records.ride_id = rides.id ' +
+            'JOIN schedules ON schedules.ride_id = rides.id ' +
+            'WHERE itin_id IN (?) AND date = ? ' +
+            'AND stop_id IN (?) ' +
+            'AND scheduletime >= ?', [itins, today, [depId, arrId], scheduleTime], function(err,records) {
       if(err) throw err;
 
-      if(rows.length > 0) {
-        console.log("Found " + rows.length + " compatible itineraries");
+      console.log("Found " + records.length + " schedules");
 
-        var itins = _.map(rows, 'itin_id');
+      if(records.length > 0) {
+        //Send results
+        fetch = false;
+        con.query('SELECT * FROM stops WHERE id = ?', depId, function(err, stops) {
+          
+          //Group records by ride and take only those having 2 schedules (departure and arrival)
+          var rides = _(records)
+                       .groupBy("ride_id")
+                       .filter(r => r.length == 2)
+                       .sortBy("scheduletime")
+                       .value();
+          
 
-        //Then we want all recorded schedules for rides on the target itinerary for today, 
-        //filter those departing earlier than our deptime
-        console.log(scheduleTime);
-
-        con.query('SELECT * FROM records JOIN rides ON records.ride_id = rides.id ' +
-                  'JOIN schedules ON schedules.ride_id = rides.id ' +
-                  'WHERE itin_id IN (?) AND date = ? ' +
-                  'AND stop_id IN (?) ' +
-                  'AND scheduletime >= ?', [itins, today, [depId, arrId], scheduleTime], function(err,records) {
-            if(err) throw err;
-
-            console.log("Found " + records.length + " schedules");
-
-            if(rows.length > 0) {
-              //Send results
-              fetch = false;
-
-              con.query('SELECT directedroutes.id as id, directiondisplay, directionid, line_id, linename, lineoriginalid ' + 
-                        'FROM directedroutes JOIN `lines` ON directedroutes.line_id = lines.id ' + 
-                        'WHERE directedroutes.id = ?', records[0].route_id, function(err,routes){
-                  if(err) throw err;
-
-                  con.query('SELECT * FROM stops WHERE id = ?', depId, function(err, stops) {
-                    
-                    //Group records by ride and take only those having 2 schedules (departure and arrival)
-                    var rides = _(records)
-                                 .groupBy("ride_id")
-                                 .filter(r => r.length == 2)
-                                 .sortBy("scheduletime")
-                                 .value();
-                    
-
-                    var results = [];
-                    for (var res in rides ) {
-                        var result = {};
-                        result.lineName = routes[0].linename;
-                        result.direction = routes[0].directionid;
-                        result.directionDisplay = routes[0].directiondisplay;
-                        result.depStop = stops[0].stopname;
-                        result.depHour = rides[res][0].scheduletime;
-                        result.arrHour = rides[res][1].scheduletime;
-                        if(results.length > 0 && (new Date(result.depHour).getTime() == new Date(results[results.length - 1].depHour).getTime())) {
-                          results[results.length - 1].doubled = true;
-                        } else {
-                          results.push(result);
-                        }
-                    }
-                    console.log(results);
-                    callback(err, results, null, null, fetch);
-                  });
-                  
-              });   
-            } else {
-              //No results. So what do we fetch?
-              
-              con.query('SELECT * FROM records JOIN rides ON records.ride_id = rides.id ' +
-                  'WHERE itin_id IN (?) AND date = ? ', [itins, today], function(err,rows) {
-                  
-                  if(err) throw err;
-
-                  if(rows.length > 0) {
-                    console.log("found some records " + rows.length);
-                    //It means that there is a record for today for the given itineraries, but no matching results.
-                    //It means that we don't need to scrape
-                    fetch = false;
-                    callback(null, null, null, null, fetch);
-                  } else {
-                    //It means that there is no record for today, so let's go fetch them
-                    fetch = true;
-                    con.query('SELECT * FROM directedroutes JOIN itineraries ON itineraries.route_id = directedroutes.id ' + 
-                    'WHERE itineraries.id = ?', itins[0], function(err, rows) {
-                      if (err) throw err;
-
-                      callback(err, null, rows[0].line_id, rows[0].directionid, fetch);
-
-                    });
-                  }
-              })
-            }
+          var results = [];
+          for (var res in rides ) {
+              var result = {};
+              result.lineName = route.linename;
+              result.direction = route.directionid;
+              result.directionDisplay = route.directiondisplay;
+              result.depStop = stops[0].stopname;
+              result.depHour = rides[res][0].scheduletime;
+              result.arrHour = rides[res][1].scheduletime;
+              if(results.length > 0 && (new Date(result.depHour).getTime() == new Date(results[results.length - 1].depHour).getTime())) {
+                results[results.length - 1].doubled = true;
+              } else {
+                results.push(result);
+              }
+          }
+          console.log(results);
+          callback(err, results, fetch);
         });
       } else {
-        console.log("No itinerary found");
-        //This should not happen if the database is well populated
-        var lineid = 1;
-        var directionid = 2;
-        fetch = true;
-        callback(err, null, lineid, directionid, fetch);
+        //No results. So what do we fetch?
+        
+        con.query('SELECT * FROM records JOIN rides ON records.ride_id = rides.id ' +
+            'WHERE itin_id IN (?) AND date = ? ', [itins, today], function(err,rows) {
+            
+            if(err) throw err;
+
+            if(rows.length > 0) {
+              console.log("found some records " + rows.length);
+              //It means that there is a record for today for the given itineraries, but no matching results.
+              //It means that we don't need to scrape
+              fetch = false;
+            } else {
+              //It means that there is no record for today, so let's go fetch them
+              fetch = true;
+            }
+            callback(err, null, fetch);
+        })
       }
   });
-};
+}
 exports.DataProvider = DataProvider;
