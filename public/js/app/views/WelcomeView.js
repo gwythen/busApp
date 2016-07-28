@@ -72,6 +72,8 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     self.saveValue(datum, "line");
                     //fetch stops
                     self.fetchResults(datum.id);
+                }).on('typeahead:active', function () {
+                    $('#line .typeahead').typeahead('val', "");
                 });
                 $('#depStop .typeahead').typeahead(null, {
                   displayKey: 'stopname',
@@ -80,6 +82,8 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     console.log(datum);
                     self.saveValue(datum, "depStop");
                     //var returnStop = self.searchReturnStop(datum);
+                }).on('typeahead:active', function () {
+                    $('#depStop .typeahead').typeahead('val', "");
                 });
                 $('#arrStop .typeahead').typeahead(null, {
                   displayKey: 'stopname',
@@ -88,6 +92,8 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     console.log(datum);
                     self.saveValue(datum, "arrStop");
                     //var returnStop = self.searchReturnStop(datum);
+                }).on('typeahead:active', function () {
+                    $('#arrStop .typeahead').typeahead('val', "");
                 });
                 
             },

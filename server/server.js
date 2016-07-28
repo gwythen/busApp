@@ -56,7 +56,7 @@ getBuses = function(depId, arrId, lineId, mainCallback) {
             route.route_id = dep.route_id;
             route.directionid = dep.directionid;
             route.directiondisplay = dep.directiondisplay;
-            route.linename = dep.linename;
+            route.linename = dep.linename.split(" - ")[0];
             console.log("stops for ids " + depId + " " + arrId);
             console.log(dep);
             console.log(arr);
@@ -75,10 +75,14 @@ getBuses = function(depId, arrId, lineId, mainCallback) {
                             console.log("going to fetch itineraries");
                             //We fetch itineraries and rides for this direction of the line
                             BusScraper.scrapeBuses(dep.id, arr.id, lineId, dep.directionid, function(results) {
-                                finalRes = results;
-                                var fakeErr = new Error();
-                                fakeErr.break = true;
-                                return loopCallback(fakeErr);
+                                if(results.length > 0) {
+                                    finalRes = results;
+                                    var fakeErr = new Error();
+                                    fakeErr.break = true;
+                                    return loopCallback(fakeErr);
+                                } else {
+                                    loopCallback();
+                                }
                             });
                         } else {
                             loopCallback();

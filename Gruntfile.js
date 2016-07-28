@@ -21,8 +21,8 @@ module.exports = function(grunt) {
             mainCSS: {
                 options: {
                     optimizeCss: "standard",
-                    cssIn: "./public/css/app.css",
-                    out: "./public/css/app.min.css"
+                    cssIn: "./public/css/main.css",
+                    out: "./public/css/main.min.css"
                 }
             }
         },

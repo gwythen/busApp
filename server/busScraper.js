@@ -91,7 +91,7 @@ BusScraper = function(DataProvider) {
 				                                }
 				                            ], function (err) {
 				                                var result = {};
-				                                result.lineName = directedRoute.linename;
+				                                result.lineName = directedRoute.linename.split(" - ")[0];
 				                                result.depStop = stopName;
 				                                result.directionDisplay = directedRoute.directiondisplay;
 				                                var depfound = false;
@@ -276,7 +276,6 @@ BusScraper = function(DataProvider) {
                 function (err) {
                 	//We still need to process the CG06 lines, that are not listed on the ceparou06 site
                 	var linesLinks = DBInitializer.getCG06Links();
-                	console.log("--------------parsing CG06 Lines--------------");
                 	that.parseLines(linesLinks, function(err, lines) {
                 		allLines = allLines.concat(lines);
                         topCallback(err, allLines);
