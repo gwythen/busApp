@@ -102,7 +102,8 @@ module.exports = {
 	    		   "localitycode varchar(255)," +
 	    		   "operatorid int(11)," +
 	    		   "operatorname varchar(255)," +
-	    		   "PRIMARY KEY (id)" +	               
+	    		   "PRIMARY KEY (id)," +
+	    		   "UNIQUE KEY `ix_original` (`originalid`)" +          
 	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
 	      ,function(err,rows){
 	      if(err) throw err;
@@ -216,20 +217,12 @@ module.exports = {
 
 				        	//Then we can create the stops
 				        	linedir.stops.forEach(function(stop) {
-								
-								con.query('SELECT * FROM `stops` WHERE stopname = ? AND originalid = ?', [stop.stopname, stop.originalid] ,function(err,rows){
-								    if(err) throw err;
-
-								    if(rows.length == 0) {
-								    	//the stop doesn't exist, we add it
-								    	con.query('INSERT INTO `stops` SET ?', stop, function(err,res){
-										  	if(err) throw err;
-										  	console.log('Stop added: ', stop.stopname);
-										  	addStopByRoute(res.insertId);
-										});
-								    } else {
-								    	addStopByRoute(rows[0].id);
-								    }
+								console.log("looking for stop " + stop.stopname + " " + stop.originalid);
+								con.query('INSERT INTO `stops` SET ? ' +
+										  'ON DUPLICATE KEY UPDATE id= LAST_INSERT_ID(id)', stop, function(err,res) {
+								  	if(err) throw err;
+								  	console.log('Stop added: ', stop.stopname);
+								  	addStopByRoute(res.insertId);
 								});
 
 				        		var addStopByRoute = function(stopid) {
