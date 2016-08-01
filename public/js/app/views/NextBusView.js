@@ -8,6 +8,10 @@ define([ 'marionette', 'handlebars', 'text!templates/nextBus.html'],
 				'counter':'#counter'
             },
 
+            events: {
+                'click #submitButton' : 'submit'
+            },
+
             initialize: function () {
                 if(this.model) {
                     this.model.on('change', _.bind(this.reRenderCounter, this));
@@ -16,6 +20,11 @@ define([ 'marionette', 'handlebars', 'text!templates/nextBus.html'],
 
             onRender: function() {
                 this.reRenderCounter();
+            },
+
+            submit: function(e) {
+                e.preventDefault();
+                this.trigger('fetchResults', {revert: true});
             },
             
 			reRenderCounter: function () {

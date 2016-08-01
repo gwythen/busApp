@@ -243,7 +243,7 @@ DataProvider.prototype.checkRideExistence = function(allItineraries, currRide, c
               if(currsched.length == ridesched.length) {
                   var allsched = true;
                   for(var x = 0; x < ridesched.length; x++) {
-                      if(ridesched[x].scheduletime.valueOf() != currsched[x].scheduletime.valueOf()) {
+                      if(!moment(ridesched[x].scheduletime).isSame(currsched[x].scheduletime)) {
                           allsched = false;
                           break;
                       }
@@ -300,13 +300,12 @@ DataProvider.prototype.saveRide = function(itin_id, route_id, currRide, callback
   var ride = {};
   ride.route_id = route_id;
   ride.itin_id = itin_id;
-  ride.deptime = currRide.schedules[0].scheduletime;
+  ride.deptime = currRide.schedules[0].scheduletime.format("YYYY-MM-DD HH:mm:ss");
   DataProvider.prototype.setRide(ride, function(err, r) {
     if(err) throw err;
 
     var record = {};
-    var date = new Date();
-    record.date = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0,0));
+    record.date = moment().format("YYYY-MM-DD");
     record.route_id = route_id;
     record.ride_id = r.insertId;
     DataProvider.prototype.setRecord(record, function(err, item){} );
@@ -315,7 +314,7 @@ DataProvider.prototype.saveRide = function(itin_id, route_id, currRide, callback
       var sched = {};
       sched.ride_id = r.insertId;
       sched.stop_id = currRide.stopOrder[i].stop_id;
-      sched.scheduletime = currRide.schedules[i].scheduletime;
+      sched.scheduletime = currRide.schedules[i].scheduletime.format("YYYY-MM-DD HH:mm:ss");
       DataProvider.prototype.setSchedule(sched, function(error, item) {});
     }
     callback(err, r);
@@ -404,11 +403,9 @@ DataProvider.prototype.getBuses = function(depId, arrId, route, callback) {
   }
 
 DataProvider.prototype.getItinerarySchedules = function(itins, depId, arrId, route, callback) {
-  var today = moment().format('YYYY-MM-DD'); 
-  var MS_PER_MINUTE = 60000;
-  var scheduleTime = new Date(1970, 0, 1, moment().hours(), moment().minutes(), 0, 0);
-  scheduleTime = new Date(scheduleTime.getTime() - 5 * MS_PER_MINUTE);
+  var scheduleTime = moment().year(1970).month(0).date(1).seconds(0).subtract(5, 'minutes').format('YYYY-MM-DD HH:mm:ss');
   console.log(scheduleTime);
+  var today = moment().format('YYYY-MM-DD');
   
   con.query('SELECT * FROM records JOIN rides ON records.ride_id = rides.id ' +
             'JOIN schedules ON schedules.ride_id = rides.id ' +
@@ -439,9 +436,9 @@ DataProvider.prototype.getItinerarySchedules = function(itins, depId, arrId, rou
               result.direction = route.directionid;
               result.directionDisplay = route.directiondisplay;
               result.depStop = stops[0].stopname;
-              result.depHour = rides[res][0].scheduletime;
-              result.arrHour = rides[res][1].scheduletime;
-              if(results.length > 0 && (new Date(result.depHour).getTime() == new Date(results[results.length - 1].depHour).getTime())) {
+              result.depHour = moment(rides[res][0].scheduletime);
+              result.arrHour = moment(rides[res][1].scheduletime);
+              if(results.length > 0 && (moment(result.depHour).isSame(results[results.length - 1].depHour))) {
                 results[results.length - 1].doubled = true;
               } else {
                 results.push(result);

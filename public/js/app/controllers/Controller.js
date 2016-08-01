@@ -20,30 +20,36 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
             var welcome = new WelcomeView({model: this.search});
             App.mainRegion.show(welcome);
             welcome.on("fetchResults", function() {
-                App.appRouter.navigate("/", true);
+                this.fetchResults();
             }, this);
         },
 
-        fetchResults: function() {
+        fetchResults: function(params) {
             App.mainRegion.show(new LoadingView());
             var self = this;
-            this.search.fetch().done(function (data) {
-                var results = self.search.get('results');
-                if(results.length > 0) {
-                    var layout = new SwipableLayout();
-                    App.mainRegion.show(layout);
-                    for(var i=0; i < results.length; i++) {
-                        var nextBusView = new NextBusView({model: results.models[i]});
-                        layout.add(nextBusView, results.models[i].get("depHour"));
+            var searchParams = params ? params : {};
+            this.search.fetch({
+                    data: $.param(searchParams)
+                }).done(function (data) {
+                    var results = self.search.get('results');
+                    if(results.length > 0) {
+                        var layout = new SwipableLayout();
+                        App.mainRegion.show(layout);
+                        for(var i=0; i < results.length; i++) {
+                            var nextBusView = new NextBusView({model: results.models[i]});
+                            layout.add(nextBusView, results.models[i].get("depHour"));
+                            nextBusView.on("fetchResults", function(params) {
+                                this.fetchResults(params);
+                            }, this);
+                        }
+                        layout.show();
+                    } else {
+                        var error = new ErrorMessage();
+                        error.set("message", "No results found");
+                        error.set("type", "notFound");
+                        App.mainRegion.show(new ErrorView({model: error}));
                     }
-                    layout.show();
-                } else {
-                    var error = new ErrorMessage();
-                    error.set("message", "No results found");
-                    error.set("type", "notFound");
-                    App.mainRegion.show(new ErrorView({model: error}));
-                }
-            });
+                });
         }
 
     });

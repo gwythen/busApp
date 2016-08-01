@@ -68,7 +68,11 @@ define([
       busAppData.outArrStop = this.get("arrStop");
       localStorage.setItem("busApp", JSON.stringify(busAppData));
     }
+  },
 
+  submit: function(e) {
+      e.preventDefault();
+      this.trigger('fetchResults');
   },
   
   hasParameters: function() {

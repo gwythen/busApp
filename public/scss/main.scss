@@ -146,7 +146,7 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   height: 3rem;
   width: 30rem;
   border-radius: 0;
-  background-color: #$backgroundColor;
+  background-color: $backgroundColor;
   left: auto !important;
   padding-left: 0;
 }
@@ -308,6 +308,12 @@ input.typeahead.tt-hint {
 
 .nearing {
 	color: rgb(255, 167, 71);
+}
+
+span.glyphicon.glyphicon-sort {
+  color: white;
+  padding-right: 0.6rem;
+  font-size:2rem;
 }
 
 .swipableContainer {

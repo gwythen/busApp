@@ -1,5 +1,5 @@
-define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'models/BusSearch', 'text!templates/welcome.html'],
-    function( App, Marionette, Handlebars, Stops, BusSearch, template) {
+define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'text!templates/welcome.html'],
+    function( App, Marionette, Handlebars, Stops, template) {
         //ItemView provides some default rendering logic
         return Marionette.CompositeView.extend( {
             //Template HTML string
@@ -70,8 +70,7 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                 }).on('typeahead:selected', function (obj, datum) {
                     console.log(datum);
                     self.saveValue(datum, "line");
-                    //fetch stops
-                    self.fetchResults(datum.id);
+                    self.fetchStops(datum.id);
                 }).on('typeahead:active', function () {
                     $('#line .typeahead').typeahead('val', "");
                 });
@@ -125,11 +124,10 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'mode
                     this.ui.submitButton.prop('disabled', true);
                 }
             },
-            fetchResults: function(lineid) {
+            fetchStops: function(lineid) {
                 var that = this;
                 console.log(lineid);
                 var params = {lineid: lineid};
-                // stopcollection.set({ lineid: lineid});
                 var stops = new Stops();
                 stops.fetch({
                     data: $.param(params)

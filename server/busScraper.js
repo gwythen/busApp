@@ -72,11 +72,9 @@ BusScraper = function(DataProvider) {
 				                function () { return currIndex <= maxIndex; },
 				                function (err) {
 				                    if(totalRides.length > 0) {
-				                        var date = new Date();
 
-				                        var currentTime = new Date(1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0);
-				                        currentTime = new Date(currentTime.getTime() - 5 * MS_PER_MINUTE);
-
+				                        var currentTime = moment().year(1970).month(0).date(1).seconds(0).subtract(5, 'minutes');
+				         
 				                        async.eachSeries(totalRides, function(currRide, loopCallback) {
 				                            async.waterfall([
 				                                function(callback) {
@@ -94,12 +92,13 @@ BusScraper = function(DataProvider) {
 				                                result.lineName = directedRoute.linename.split(" - ")[0];
 				                                result.depStop = stopName;
 				                                result.directionDisplay = directedRoute.directiondisplay;
+				                                result.directionid = directedRoute.directionid;
 				                                var depfound = false;
 				                                for (var j = 0; j < currRide.schedules.length; j++) {
 				                                  var currSchedule = currRide.schedules[j];
 				                                  if(!depfound) {
-				                                    if(currSchedule.stop.toString() == depId && currSchedule.scheduletime.getTime() >= currentTime.getTime()) {
-				                                      if(results.length > 0 && currSchedule.scheduletime.getTime() == results[results.length - 1].depHour.getTime()) {
+				                                    if(currSchedule.stop.toString() == depId && currentTime.isBefore(currSchedule)) {
+				                                      if(results.length > 0 && currSchedule.scheduletime.isSame(results[results.length - 1].depHour)) {
 				                                        results[results.length - 1].doubled = true;
 				                                        break;
 				                                      } else {
@@ -108,7 +107,7 @@ BusScraper = function(DataProvider) {
 				                                      }
 				                                    }
 				                                  } else {
-				                                    if(currSchedule.stop.toString() == arrId && currSchedule.scheduletime.getTime() > currentTime.getTime()) {
+				                                    if(currSchedule.stop.toString() == arrId && currentTime.isBefore(currSchedule.scheduletime)) {
 				                                      result.arrHour = currSchedule.scheduletime;
 				                                      results.push(result);
 				                                      break;
@@ -178,9 +177,7 @@ BusScraper = function(DataProvider) {
 		                    schedule.stop = currStopDbId;
 		                    var time = $(rowColumns[k]).text().split(":");
 
-		                    var scheduletime = new Date(Date.UTC(1970, 0, 1));
-		                    scheduletime.setHours(parseInt(time[0]));
-		                    scheduletime.setMinutes(parseInt(time[1]));
+		                    var scheduletime = moment().year(1970).month(0).date(1).hours(parseInt(time[0])).minutes(parseInt(time[1])).seconds(0);
 
 		                    schedule.scheduletime = scheduletime;
 		                    rides[k].stopOrder.push({stop_id: schedule.stop});
@@ -233,7 +230,8 @@ BusScraper = function(DataProvider) {
 				//Otherwise, we just add a record
 			    var record = {};
 			    var date = new Date();
-			    record.date = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0,0));
+
+			    record.date = moment().format('YYYY-MM-DD');
 			    record.route_id = directedRoute.id;
 			    record.ride_id = currRide.id;
 			    DataProvider.setRecord(record, function(err, item){} );

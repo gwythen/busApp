@@ -127,7 +127,7 @@ module.exports = {
 	    		   "id int(11) NOT NULL AUTO_INCREMENT," +
 	    		   "route_id int(11)," +
 	    		   "itin_id int(11)," +
-	    		   "deptime timestamp," +
+	    		   "deptime datetime," +
 	    		   "FOREIGN KEY (route_id) REFERENCES `directedroutes` (id)," +
 	    		   "FOREIGN KEY (itin_id) REFERENCES `itineraries` (id)," +
 	    		   "PRIMARY KEY (id)" +
@@ -141,7 +141,7 @@ module.exports = {
 	    con.query("CREATE TABLE `schedules` (" +
 	    		   "ride_id int(11)," +
 	    		   "stop_id int(11)," +
-	    		   "scheduletime timestamp," +
+	    		   "scheduletime datetime," +
 	    		   "FOREIGN KEY (ride_id) REFERENCES `rides` (id)," +
 	    		   "FOREIGN KEY (stop_id) REFERENCES `stops` (id)" +
 	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
