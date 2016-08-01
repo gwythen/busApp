@@ -10,7 +10,6 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
             if(this.search.hasParameters()) {
                 this.fetchResults();
             } else {
-                //this.settings();
                 App.appRouter.navigate("/settings");
                 this.settings();
             }
@@ -28,9 +27,11 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
             App.mainRegion.show(new LoadingView());
             var self = this;
             var searchParams = params ? params : {};
-            this.search.fetch({
-                    data: $.param(searchParams)
-                }).done(function (data) {
+            this.search.set(params);
+            this.search.fetch().done(function (data) {
+            // this.search.fetch({
+            //         data: $.param(searchParams)
+            //     }).done(function (data) {
                     var results = self.search.get('results');
                     if(results.length > 0) {
                         var layout = new SwipableLayout();
@@ -40,7 +41,7 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
                             layout.add(nextBusView, results.models[i].get("depHour"));
                             nextBusView.on("fetchResults", function(params) {
                                 this.fetchResults(params);
-                            }, this);
+                            }, self);
                         }
                         layout.show();
                     } else {

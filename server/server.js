@@ -42,16 +42,25 @@ var rootUrl = 'http://www.ceparou06.fr/';
 // ======
 
 
-getBuses = function(depId, arrId, lineId, mainCallback) {
+getBuses = function(depId, arrId, lineId, direction, revert, mainCallback) {
     //First we get all the possible stops by directedroute for the line
     DataProvider.getLineStops(lineId, function(err, stops) {
         //Then we run getbuses on all possible directed route in sequence. -> direction1: results ? then stop, else search direction2 
         
         var directions = _.values(stops);
+        //We already know which direction we want to take, no need to explore both
+        if(revert) {
+            if(direction == 1) {
+                directions = [stops[2]];
+            } else {
+                directions = [stops[1]];
+            }
+        }
         var finalRes = [];
         async.eachSeries(directions, function(direction, loopCallback) {
             var dep = _.find(direction, ['logicalid', parseInt(depId)]);
             var arr = _.find(direction, ['logicalid', parseInt(arrId)]);
+
             var route = {};
             route.route_id = dep.route_id;
             route.directionid = dep.directionid;
@@ -93,10 +102,6 @@ getBuses = function(depId, arrId, lineId, mainCallback) {
                 loopCallback();
             }
         }, function(err) {
-            // if (err && err.break)
-            //     mainCallback(finalRes);
-            // else
-
             console.log("returning results");
             console.log(finalRes);
             mainCallback(_.take(finalRes, 5));
@@ -124,7 +129,7 @@ server.get('/', function(req, res) {
 });
 
 server.get('/api/search', function(req, res) {
-    getBuses(req.query.depStop, req.query.arrStop, req.query.line, function(results) {
+    getBuses(req.query.depStop, req.query.arrStop, req.query.line, req.query.direction, req.query.revert, function(results) {
         console.log("returning " + results.length + " results");
         return res.send(results);
     });

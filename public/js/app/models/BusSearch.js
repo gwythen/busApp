@@ -9,37 +9,46 @@ define([
 ) {
   var Search = Backbone.Model.extend({
   urlRoot: "api/search",
+    initialize: function() {
+      this.fetchFromLocalStorage();
+    },
     url: function() {
       var url = this.urlRoot;
       var now = new Date();
       var depStop = this.get("depStop").logicalid;
       var arrStop = this.get("arrStop").logicalid;
       var line = this.get("line").id;
+      var direction = null;
+      var revert = null;
 
-      if(now.getHours() <= 12) {
-        depStop = this.get("depStop").logicalid;
-        arrStop = this.get("arrStop").logicalid;
+      
+      if(this.get("revert")) {
+        depStop = this.get("currArrStop");
+        arrStop = this.get("currDepStop");
+        direction = this.get("currDirection") ? "&direction=" + this.get("currDirection") : null;
+        revert = "&revert=true"
       } else {
-        depStop = this.get("arrStop").logicalid;
-        arrStop = this.get("depStop").logicalid;
+        if(now.getHours() > 12) {
+          depStop = this.get("arrStop").logicalid;
+          arrStop = this.get("depStop").logicalid;
+        }
       }
-      url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=" + line;
+
+      this.set("currDepStop", depStop);
+      this.set("currArrStop", arrStop);
+
+      
+      url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=" + line + direction + revert;
       return url;
   },
-  initialize: function() {
-      this.set("line", null);
-      this.set("depStop", null);
-      this.set("arrStop", null);
-
-      this.fetchFromLocalStorage();
-      this.on('change:line', this.setInLocalStorage, this);
-      this.on('change:depStop', this.setInLocalStorage, this);
-      this.on('change:arrStop', this.setInLocalStorage, this);
-  },
+  
   parse: function(response) {
         this.set({
           results: new ResultCollection(response)
         });
+        if(response.length) {
+          this.set("currDirection", response[0].direction);
+        }
   },
 
   fetchFromLocalStorage: function() {
