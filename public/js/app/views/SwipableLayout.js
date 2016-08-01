@@ -2,8 +2,7 @@ define([
     'App',
     'marionette',
     'handlebars',
-    'text!templates/swipableLayout.html',
-    'text!templates/tabItemTemplate.html'
+    'text!templates/swipableLayout.html'
   ],
   function(
     App,
@@ -13,33 +12,10 @@ define([
     tabItemTemplate
   ) {
 
-    var TabName = Backbone.Model.extend({
-      defaults: {
-        name: ""
-      }
-    });
-
     var ViewModel = Backbone.Model.extend({
       defaults: {
         viewToDisplay: {}
       }
-    });
-
-    var TabItem = Marionette.ItemView.extend({
-      template: Handlebars.compile(tabItemTemplate),
-      className: "swiper-slide",
-      modelEvents: {
-        "change": "render"
-      },
-     
-    });
-
-    var TabsList = Marionette.CollectionView.extend({
-      itemView: TabItem,
-      className: "swiper-wrapper",
-      collectionEvents: {
-        "change": "render"
-      },
     });
 
     var ViewItem = Marionette.ItemView.extend({
@@ -47,12 +23,20 @@ define([
       modelEvents: {
         "change": "render"
       },
+
+      events: {
+        'click': "test"
+      },
       
       template: Handlebars.compile("<div class='inner'></div>"),
 
       onRender: function(){
         var region = new (Marionette.Region.extend({el: this.$el.find(".inner")}))();
         region.show(this.model.get("viewToDisplay"));
+      },
+
+      test: function(e) {
+        this.model.get("viewToDisplay").trigger("eventHandler", e);
       }
 
     });
@@ -79,21 +63,14 @@ define([
           model: ViewItem
         }))();
 
-        // this.tabCollection = new (Backbone.Collection.extend({
-        //   model: TabItem
-        // }))();
-
         this.viewsList = new ViewsList({collection: this.viewCollection});
-        // this.tabsList = new TabsList({collection: this.tabCollection});
 
         this.listenTo(this.viewsHolder, "show", this.initializeSwiper);
       },
 
 
       add: function(view, tabName) {
-        var model = new TabName({name: tabName});
         var viewModel = new ViewModel({viewToDisplay: view});
-        //this.tabCollection.add(model);
         this.viewCollection.add(viewModel);
       },
 
@@ -109,19 +86,10 @@ define([
           preventLinksPropagation: false,
           preventLinks: false,
           pagination: ".pagination",
-          // onSlideChangeStart: function(){
-          //   self.updateNavPosition();
-          // }
+          onClick: function(swiper, event) {
+            console.log("clicked");
+          }
         });
-
-        //Nav
-        // this.navSwiper = $('.swiper-nav').swiper({
-        //   centeredSlides: true,
-        //   //Thumbnails Clicks
-        //   onSlideClick: function(){
-        //     self.contentSwiper.swipeTo( self.navSwiper.clickedSlideIndex );
-        //   }
-        // });
       },
 
       show: function() {
@@ -133,22 +101,6 @@ define([
           height: $(window).height() - 53
         });
       },
-
-      //Update Nav Position
-      // updateNavPosition: function() {
-      //   $('.swiper-nav .active-nav').removeClass('active-nav');
-      //   var activeNav = $('.swiper-nav .swiper-slide').eq(this.contentSwiper.activeIndex).addClass('active-nav');
-      //   this.navSwiper.swipeTo(activeNav.index());
-      //   if (!activeNav.hasClass('swiper-slide-visible')) {
-      //     if (activeNav.index()>this.navSwiper.activeIndex) {
-      //       //var thumbsPerNav = Math.floor(this.navSwiper.width/activeNav.width())-1;
-      //       this.navSwiper.swipeTo(activeNav.index());
-      //     }
-      //     else {
-      //       this.navSwiper.swipeTo(activeNav.index());
-      //     }
-      //   }
-      // }
 
     });
 

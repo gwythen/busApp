@@ -5,17 +5,23 @@ define([ 'marionette', 'handlebars', 'text!templates/nextBus.html'],
             template:Handlebars.compile(template),
 
             ui: {
-				'counter':'#counter'
+				'counter':'#counter',
+                'submit':'#submit'
             },
 
             events: {
-                'click #submitButton' : 'submit'
+                'click submit' : 'submit'
             },
 
             initialize: function () {
                 if(this.model) {
                     this.model.on('change', _.bind(this.reRenderCounter, this));
-                }	
+                }
+                this.on("eventHandler", function(e) {
+                    if(e.target.id == "submit") {
+                        this.submit(e);
+                    }
+                })
 			},
 
             onRender: function() {
