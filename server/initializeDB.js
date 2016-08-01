@@ -57,7 +57,8 @@ module.exports = {
 	               "id int(11) NOT NULL AUTO_INCREMENT," +
 	               "linename varchar(255)," + 
 	               "lineoriginalid int(11)," +
-	               "PRIMARY KEY (id)" +
+	               "PRIMARY KEY (id), " +
+	               "UNIQUE KEY `ix_original` (`lineoriginalid`)" +
 	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
 	      ,function(err,rows){
 	      if(err) throw err;
@@ -187,7 +188,8 @@ module.exports = {
 				var linerec = {};
 				linerec.lineoriginalid = line.lineoriginalid;
 				linerec. linename = line.linename;
-				con.query('INSERT INTO `lines` SET ?', linerec, function(err, res) {
+				con.query('INSERT INTO `lines` SET ? ' +
+						  'ON DUPLICATE KEY UPDATE id= LAST_INSERT_ID(id)', linerec, function(err, res) {
 					if(err) throw err;
 
 					line.id = res.insertId;
