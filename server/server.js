@@ -58,8 +58,10 @@ getBuses = function(depId, arrId, lineId, direction, revert, mainCallback) {
         }
         var finalRes = [];
         async.eachSeries(directions, function(direction, loopCallback) {
-            var dep = _.find(direction, ['logicalid', parseInt(depId)]);
-            var arr = _.find(direction, ['logicalid', parseInt(arrId)]);
+            console.log("yoyoyo");
+            console.log(direction);
+            var dep = _.find(direction, ['logicalid', depId]);
+            var arr = _.find(direction, ['logicalid', arrId]);
 
             var route = {};
             route.route_id = dep.route_id;
@@ -122,10 +124,8 @@ server.get('/api/reset/:id/:code', function(req, res) {
     }
 });
 
-server.get('/', function(req, res) {
-    DataProvider.getLineStops(1, function(err, stops) {
-        return res.render('index', {stops: JSON.stringify(stops)});
-    });
+server.get('/', function(req, res) {+
+    res.render('index');
 });
 
 server.get('/api/search', function(req, res) {
@@ -151,9 +151,7 @@ server.get('/api/getLineStops', function(req, res) {
 });
 
 server.get('*', function(req, res) {
-    DataProvider.getLineStops(1, function(err, stops) {
-        return res.render('index', {stops: JSON.stringify(stops)});
-    });
+    res.render('index');
 });
 
 

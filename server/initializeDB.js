@@ -51,199 +51,249 @@ Rides -> Schedules: one-to-many
 */
 
 module.exports = {
-	initializeDB: function(con, busScraper, callback) {
+	initializeDB: function(query, busScraper, mainCallback) {
 		this.busScraper = busScraper;
-		con.query('CREATE TABLE `lines` (' +
-	               "id int(11) NOT NULL AUTO_INCREMENT," +
-	               "linename varchar(255)," + 
-	               "lineoriginalid int(11)," +
+		async.waterfall([
+            function(callback) {
+                query('CREATE TABLE lines (' +
+	               "id bigserial NOT NULL," +
+	               "linename text," + 
+	               "lineoriginalid bigint," +
 	               "PRIMARY KEY (id), " +
-	               "UNIQUE KEY `ix_original` (`lineoriginalid`)" +
-	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
-	      ,function(err,rows){
-	      if(err) throw err;
+	               "CONSTRAINT lineidx UNIQUE (lineoriginalid)" +
+	               ")"
+			      ,function(err,rows){
+			      if(err) throw err;
 
-	      console.log('Lines table created');
-	    });
-
-	    con.query("CREATE TABLE `directedroutes` (" +
-	               "id int(11) NOT NULL AUTO_INCREMENT," +
-	               "directiondisplay varchar(255)," +
-	               "directionid int(11)," +
-	               "line_id int(11)," +
-	               "FOREIGN KEY (line_id) REFERENCES `lines` (id)," + 
+			      console.log('Lines table created');
+			      callback();
+			    });
+            },
+            function(callback) {
+                query("CREATE TABLE directedroutes (" +
+	               "id bigserial NOT NULL," +
+	               "directiondisplay text," +
+	               "directionid bigint," +
+	               "line_id bigint," +
+	               "FOREIGN KEY (line_id) REFERENCES lines (id)," + 
 	               "PRIMARY KEY (id)" +
-	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
-	      ,function(err,rows){
-	      if(err) throw err;
+	               ")"
+			      ,function(err,rows){
+			      if(err) throw err;
 
-	      console.log('Directedroutes table created');
-	    });
-
-	    con.query("CREATE TABLE `itineraries` (" +
-	    	 	   "id int(11) NOT NULL AUTO_INCREMENT," +
-	    		   "route_id int(11)," +
-	               "FOREIGN KEY (route_id) REFERENCES `directedroutes` (id)," + 
-	               "description varchar(255)," +
+			      console.log('Directedroutes table created');
+			      callback();
+			    });
+            },
+            function(callback) {
+                query("CREATE TABLE itineraries (" +
+	    	 	   "id bigserial NOT NULL," +
+	    		   "route_id bigint," +
+	               "FOREIGN KEY (route_id) REFERENCES directedroutes (id)," + 
+	               "description text," +
 	               "PRIMARY KEY (id)" +
-	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
-	      ,function(err,rows){
-	      if(err) throw err;
+	               ")"
+			      ,function(err,rows){
+			      if(err) throw err;
 
-	      console.log('Itineraries table created');
-	    });
-
-	    con.query("CREATE TABLE `stops` (" +
-	    	       "id int(11) NOT NULL AUTO_INCREMENT," +
-	    		   "stopname varchar(255)," +
+			      console.log('Itineraries table created');
+			      callback();
+			    });
+            },
+            function(callback) {
+                query("CREATE TABLE stops (" +
+	    	       "id bigserial NOT NULL," +
+	    		   "stopname text," +
 	    		   "longitude float," +
 	    		   "latitude float," +
-	    		   "originalid int(11)," +
-	    		   "logicalid int(11)," +
-	    		   "localitycode varchar(255)," +
-	    		   "operatorid int(11)," +
-	    		   "operatorname varchar(255)," +
+	    		   "originalid bigint," +
+	    		   "logicalid bigint," +
+	    		   "localitycode text," +
+	    		   "operatorid bigint," +
+	    		   "operatorname text," +
 	    		   "PRIMARY KEY (id)," +
-	    		   "UNIQUE KEY `ix_original` (`originalid`)" +          
-	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
-	      ,function(err,rows){
-	      if(err) throw err;
+	    		   "CONSTRAINT originalidx UNIQUE (originalid)" +          
+	               ")"
+			      ,function(err,rows){
+			      if(err) throw err;
 
-	      console.log('Stops table created');
-	    });
+			      console.log('Stops table created');
+			      callback();
+			    });
+            },
+            function(callback) {
+                query("CREATE TABLE stopsbyroute (" +
+                   "id bigserial NOT NULL," +
+	    		   "route_id bigint," +
+	    		   "stop_id bigint," +
+	    		   "PRIMARY KEY (id)," +
+	               "FOREIGN KEY (route_id) REFERENCES directedroutes (id)," + 
+	               "FOREIGN KEY (stop_id) REFERENCES stops (id)" + 
+	               ")"
+			      ,function(err,rows){
+			      if(err) throw err;
 
-	    con.query("CREATE TABLE `stopsbyroute` (" +
-	    		   "route_id int(11)," +
-	    		   "stop_id int(11)," +
-	               "FOREIGN KEY (route_id) REFERENCES `directedroutes` (id)," + 
-	               "FOREIGN KEY (stop_id) REFERENCES `stops` (id)" + 
-	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
-	      ,function(err,rows){
-	      if(err) throw err;
-
-	      console.log('Stopsbyroute table created');
-	    });
-
-	    con.query("CREATE TABLE `rides` (" +
-	    		   "id int(11) NOT NULL AUTO_INCREMENT," +
-	    		   "route_id int(11)," +
-	    		   "itin_id int(11)," +
-	    		   "deptime datetime," +
-	    		   "FOREIGN KEY (route_id) REFERENCES `directedroutes` (id)," +
-	    		   "FOREIGN KEY (itin_id) REFERENCES `itineraries` (id)," +
+			      console.log('Stopsbyroute table created');
+			      callback();
+			    });
+            },
+            function(callback) {
+                query("CREATE TABLE rides (" +
+	    		   "id bigserial NOT NULL," +
+	    		   "route_id bigint," +
+	    		   "itin_id bigint," +
+	    		   "deptime timestamp," +
+	    		   "FOREIGN KEY (route_id) REFERENCES directedroutes (id)," +
+	    		   "FOREIGN KEY (itin_id) REFERENCES itineraries (id)," +
 	    		   "PRIMARY KEY (id)" +
-	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
-	      ,function(err,rows){
-	      if(err) throw err;
+	               ")"
+			      ,function(err,rows){
+			      if(err) throw err;
 
-	      console.log('Rides table created');
-	    });
+			      console.log('Rides table created');
+			      callback();
+			    });
+            },
+            function(callback) {
+                query("CREATE TABLE schedules (" +
+                   "id bigserial NOT NULL," +
+	    		   "ride_id bigint," +
+	    		   "stop_id bigint," +
+	    		   "scheduletime timestamp," +
+	    		   "PRIMARY KEY (id)," +
+	    		   "FOREIGN KEY (ride_id) REFERENCES rides (id)," +
+	    		   "FOREIGN KEY (stop_id) REFERENCES stops (id)" +
+	               ")"
+			      ,function(err,rows){
+			      if(err) throw err;
 
-	    con.query("CREATE TABLE `schedules` (" +
-	    		   "ride_id int(11)," +
-	    		   "stop_id int(11)," +
-	    		   "scheduletime datetime," +
-	    		   "FOREIGN KEY (ride_id) REFERENCES `rides` (id)," +
-	    		   "FOREIGN KEY (stop_id) REFERENCES `stops` (id)" +
-	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
-	      ,function(err,rows){
-	      if(err) throw err;
+			      console.log('Schedules table created');
+			      callback();
+			    });
+            },
+            function(callback) {
+                query("CREATE TABLE itinerarystopsequence (" +
+                   "id bigserial NOT NULL," +
+	    		   "itin_id bigint," +
+	    		   "stop_id bigint," +
+	    		   "seqnumber bigint," +
+	    		   "PRIMARY KEY (id)," +
+	    		   "FOREIGN KEY (itin_id) REFERENCES itineraries (id)," +
+	    		   "FOREIGN KEY (stop_id) REFERENCES stops (id)" +
+	               ")"
+			      ,function(err,rows){
+			      if(err) throw err;
 
-	      console.log('Schedules table created');
-	    });
-
-	    con.query("CREATE TABLE `itinerarystopsequence` (" +
-	    		   "itin_id int(11)," +
-	    		   "stop_id int(11)," +
-	    		   "seqnumber int(11)," +
-	    		   "FOREIGN KEY (itin_id) REFERENCES `itineraries` (id)," +
-	    		   "FOREIGN KEY (stop_id) REFERENCES `stops` (id)" +
-	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
-	      ,function(err,rows){
-	      if(err) throw err;
-
-	      console.log('Itinerarystopsequence table created');
-	    });
-
-	    con.query("CREATE TABLE `records` (" +
-	    		   "ride_id int(11)," +
-	    		   "route_id int(11)," +
+			      console.log('Itinerarystopsequence table created');
+			      callback();
+			    });
+            },
+            function(callback) {
+                query("CREATE TABLE records (" +
+                   "id bigserial NOT NULL," +
+	    		   "ride_id bigint," +
+	    		   "route_id bigint," +
 	    		   "date date," +
-	    		   "FOREIGN KEY (route_id) REFERENCES `directedroutes` (id)," +
-	    		   "FOREIGN KEY (ride_id) REFERENCES `rides` (id)" +
-	               ") ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1"
-	      ,function(err,rows){
-	      if(err) throw err;
+	    		   "PRIMARY KEY (id)," +
+	    		   "FOREIGN KEY (route_id) REFERENCES directedroutes (id)," +
+	    		   "FOREIGN KEY (ride_id) REFERENCES rides (id)" +
+	               ")"
+			      ,function(err,rows){
+			      if(err) throw err;
 
-	      console.log('Records table created');
-	      callback();
-	    });
+			      console.log('Records table created');
+			      callback();
+			    });
+            },
+
+        ], function (err) {
+        	mainCallback();
+        });	    
 	},
 
-	initializeLines: function() {
-
+	initializeLines: function(query, mainCallback) {
+		var that = this;
 		this.busScraper.getAllLines(function(err, allLines) {
 			console.log(allLines);
 			allLines.forEach(function(line) {
-				var linerec = {};
-				linerec.lineoriginalid = line.lineoriginalid;
-				linerec. linename = line.linename;
-				con.query('INSERT INTO `lines` SET ? ' +
-						  'ON DUPLICATE KEY UPDATE id= LAST_INSERT_ID(id)', linerec, function(err, res) {
-					if(err) throw err;
-
-					line.id = res.insertId;
-
-					console.log('Line added: ', line.linename);
-
-					var directedRoutes = {};
-
-			        //Adding the stops to the DB
-			        [1,2].forEach(function(direction) {
-			        	var linedir = line.directions[direction];
-			        	if(linedir.name) {
-			        		//Let's create the directed routes
-
-				        	directedRoutes[direction] = {
-				        		directionDisplay: linedir.name,
-				        		directionid: direction,
-				        		line_id: line.id
-				        	};
-
-				        	con.query('INSERT INTO `directedroutes` SET ?', directedRoutes[direction], function(err, res) {
-								if(err) throw err;
-
-								directedRoutes[direction].id = res.insertId;
-								console.log('Route added: ', directedRoutes[direction].directionDisplay);
-							});
-
-				        	//Then we can create the stops
-				        	linedir.stops.forEach(function(stop) {
-								console.log("looking for stop " + stop.stopname + " " + stop.originalid);
-								con.query('INSERT INTO `stops` SET ? ' +
-										  'ON DUPLICATE KEY UPDATE id= LAST_INSERT_ID(id)', stop, function(err,res) {
-								  	if(err) throw err;
-								  	console.log('Stop added: ', stop.stopname);
-								  	addStopByRoute(res.insertId);
-								});
-
-				        		var addStopByRoute = function(stopid) {
-				        			
-								 	//For each stop, we add a stopbyroute record
-								 	var stopbyroute = {};
-								 	stopbyroute.route_id = directedRoutes[direction].id;
-								 	stopbyroute.stop_id = stopid;
-								  	con.query('INSERT INTO `stopsbyroute` SET ?', stopbyroute, function(err, res) {
-										if(err) throw err;
-
-									});
-				        		} 
-							});
-			        	}
-			        	
-					});
+				query('INSERT INTO lines (lineoriginalid, linename) values($1, $2) RETURNING id', [line.lineoriginalid, line.linename], function(err, res) {								
+				  	if(err) {
+				  		if (err.code == 23505) {
+				  			//There already exist a record for this 
+				  			query('SELECT * FROM lines WHERE lineoriginalid = $1', [line.lineoriginalid], function(err, res) {
+				  				if(err) throw err;
+				  				line.id = res[0].id;
+				  				that.initializeStops(query, line, mainCallback);
+				  			});
+				  		} else {
+				  			throw err;
+				  		}
+				  	} else {
+				  		line.id = res[0].id;
+				  		console.log('Line added: ', line.linename);
+				  		that.initializeStops(query, line, mainCallback);
+				  	}
 				});
 	    	});
+		});
+	},
+	initializeStops: function(query, line, mainCallback) {
+		var directedRoutes = {};
+
+        //Adding the stops to the DB
+        [1,2].forEach(function(direction) {
+        	var linedir = line.directions[direction];
+        	if(linedir.name) {
+        		//Let's create the directed routes
+	        	async.waterfall([
+                    function(callback) {
+                        query('INSERT INTO directedroutes (directiondisplay, directionid, line_id) values($1, $2, $3) RETURNING id', [linedir.name, direction, line.id], function(err, res) {
+							if(err) throw err;
+
+							console.log('Route added: ', linedir.name);
+							callback(err, res[0].id);
+						});
+                    },
+                    function(route, callback) {
+						this.insertStopByRoute = function(route, stop, loopCallback) {
+					  		//For each stop, we add a stopbyroute record
+						  	query('INSERT INTO stopsbyroute (route_id, stop_id) values($1, $2)', [route, stop], function(err, res) {
+
+								if(err) throw err;
+								loopCallback();
+
+							});
+					  	}
+					  	that = this;
+					  	//Then we can create the stops
+                        async.each(linedir.stops, function(stop, loopCallback) {
+					    	console.log("looking for stop " + stop.stopname + " " + stop.originalid);
+							query('INSERT INTO stops (stopname, longitude, latitude, originalid, logicalid, localitycode, operatorid, operatorname) values($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id', [stop.stopname, stop.longitude, stop.latitude, stop.originalid, stop.logicalid, stop.localitycode, stop.operatorid, stop.operatorname], function(err,res) {
+								
+							  	if(err) {
+							  		if (err.code == 23505) {
+							  			//There already exist a record for this 
+							  			query('SELECT * FROM stops WHERE originalid = $1', [stop.originalid], function(err, res) {
+							  				if(err) throw err;
+							  				that.insertStopByRoute(route, res[0].id, loopCallback);
+							  			});
+							  		} else {
+							  			throw err;
+							  		}
+							  	} else {
+							  		console.log('Stop added: ', stop.stopname);
+							  		that.insertStopByRoute(route, res[0].id, loopCallback);
+							  	}
+							});
+						}, function(err) {
+                    		callback(err);
+                    	});
+                   	}	  						
+                ], function (err) {
+                	mainCallback();
+                });
+        	}
+        	
 		});
 	},
 	getCG06Links: function() {
@@ -263,7 +313,7 @@ module.exports = {
 		"index.asp?rub_code=6&part_id=2&lign_id=481",
 		"index.asp?rub_code=6&part_id=2&lign_id=467",
 		"index.asp?rub_code=6&part_id=2&lign_id=461",
-		"index.asp?rub_code=6&part_id=2&lign_id=1115",
+		"index.asp?rub_code=6&part_id=2&lign_id115",
 		"index.asp?rub_code=6&part_id=2&lign_id=601",
 		"index.asp?rub_code=6&part_id=2&lign_id=606",
 		"index.asp?rub_code=6&part_id=2&lign_id=480",

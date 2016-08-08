@@ -37,8 +37,12 @@ define([
       this.set("currDepStop", depStop);
       this.set("currArrStop", arrStop);
 
+      if(direction && revert) {
+        url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=" + line + direction + revert;
+      } else {
+        url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=" + line;
+      }
       
-      url = url + "/?depStop=" + depStop + "&arrStop=" + arrStop + "&line=" + line + direction + revert;
       return url;
   },
   

@@ -195,25 +195,25 @@ BusScraper = function(DataProvider) {
 				if(itin === null) {
 					var itinerary = {};
 					itinerary.route_id = directedRoute.id;
-					DataProvider.setItinerary(itinerary, function(error, itin) {
-						if(itin) {
+					DataProvider.setItinerary(itinerary, function(error, itinid) {
+						if(itinid != undefined) {
 		                    console.log("itinerary saved to the database");
 		                    var allItin = {};
 		                    allItin.route_id = directedRoute.id;
-		                    allItin.id = itin.insertId;
+		                    allItin.id = itinid;
 		                    allItin.stopOrder = [];
 		                    for(var i = 0; i < currRide.stopOrder.length; i++) {
 								var item = {};
-								item.itin_id = itin.insertId;
+								item.itin_id = itinid;
 								item.stop_id = currRide.stopOrder[i].stop_id;
 								item.seqnumber = i;
 								allItin.stopOrder.push(item);
 							}
 
-							DataProvider.setItineraryStopSequence(allItin.stopOrder, function(error, item) {
+							DataProvider.setItineraryStopSequence(allItin.stopOrder, function(error) {
 								allItineraries.push(allItin);
 							});
-							DataProvider.saveRide(itin.insertId, directedRoute.id, currRide, function(error, ride) {
+							DataProvider.saveRide(itinid, directedRoute.id, currRide, function(error, rideid) {
 								callback(null);
 							});
 							
@@ -222,7 +222,7 @@ BusScraper = function(DataProvider) {
 		                }
 					});
 				} else {
-					DataProvider.saveRide(itin.id, directedRoute.id, currRide, function(error, ride) {
+					DataProvider.saveRide(itin.id, directedRoute.id, currRide, function(error, rideid) {
 						callback(null);
 					});
 				}
@@ -244,6 +244,7 @@ BusScraper = function(DataProvider) {
 			//Networks have part_id starting from 2 to 7
 			var currIndex = 2;
 			var maxIndex = 7;
+			//var maxIndex = 2;
 			var allLines = [];
 			async.doWhilst(
                 function (docallback) {
@@ -278,6 +279,7 @@ BusScraper = function(DataProvider) {
                 		allLines = allLines.concat(lines);
                         topCallback(err, allLines);
                     });	
+                 //topCallback(err, allLines);
                 }
             )
 		},
@@ -300,7 +302,7 @@ BusScraper = function(DataProvider) {
 			var that = this;
 			var currIndex = 0;
 			var maxIndex = linesLinks.length - 1;
-			// var maxIndex = 1;
+			//var maxIndex = 1;
 			var allLines = [];
 			async.doWhilst(
                 function (docallback) {

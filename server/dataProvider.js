@@ -1,59 +1,48 @@
-var mysql = require('mysql'),
+var pg = require('pg'),
     fs = require('fs'),
     async = require('async'),
     moment = require('moment'),
     _ = require('lodash');
+    var query = require('pg-query');
 
 var DBInitializer = require('./initializeDB');
 
 DataProvider = function(host, port) {
   // First you need to create a connection to the db
-  con = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "thendon",
-    database: "busApp"
-  });
 
-  con.connect(function(err){
-    if(err){
-      console.log('Error connecting to Db');
-      return;
-    }
-    console.log('Connection established');
-  });
-
-  // con.end(function(err) {
-  //   // The connection is terminated gracefully
-  //   // Ensures all previously enqueued queries are still
-  //   // before sending a COM_QUIT packet to the MySQL server.
-  // });
+  query.connectionParameters = 'postgres://@localhost:5432/busApp';
 };
 
 
 DataProvider.prototype.reset = function(mainCallback) {
  const tables = ["stopsbyroute", "itinerarystopsequence", "schedules", "observations", "records", "rides", "itineraries", "stops", "directedroutes", "lines"];
 
-  tables.forEach(function(table) {
-    
-    con.query('DROP TABLE IF EXISTS `' + table + '`',function(err,rows){
+  async.eachSeries(tables, function(table, loopCallback) {
+      query('DROP TABLE IF EXISTS ' + table,function(err,rows){
       if(err) throw err;
 
-      console.log('Table ' + table + ' removed');
-    });
+        console.log('Table ' + table + ' removed');
+        loopCallback();
+      });
+  }, function(err) {
+      // if any of the file processing produced an error, err would equal that error
+      if( err ) {
+        // One of the iterations produced an error.
+        console.log('something was wrong');
+      } else {
+        console.log("Dropped tables");
+        var BusScraper = require('./busScraper').BusScraper;
+        var BusScraper = new BusScraper(this);
 
-  });
-  
-  var BusScraper = require('./busScraper').BusScraper;
-  var BusScraper = new BusScraper(this);
-
-  DBInitializer.initializeDB(con, BusScraper, function() {
-    DBInitializer.initializeLines();
+        DBInitializer.initializeDB(query, BusScraper, function() {
+          DBInitializer.initializeLines(query, mainCallback);
+        });
+      }
   });
 }; 
 
 DataProvider.prototype.getStop = function(stopId, callback) {
-  con.query('SELECT * FROM stops WHERE id = ?', stopId ,function(err,rows){
+  query('SELECT * FROM stops WHERE id = $1', [stopId], function(err,rows){
     if(err) throw err;
 
     callback(err, rows.length > 0 ? rows[0] : null);
@@ -61,15 +50,15 @@ DataProvider.prototype.getStop = function(stopId, callback) {
 };
 
 DataProvider.prototype.getLine = function(lineName, callback) {
-  con.query('SELECT * FROM lines WHERE linename = ?', lineName ,function(err,rows){
+  query('SELECT * FROM lines WHERE linename = $1', [lineName], function(err,rows){
     if(err) throw err;
 
     callback(err, rows.length > 0 ? rows[0] : null);
   });
 };
 
-DataProvider.prototype.searchLine = function(query, callback) {
-  con.query("SELECT * FROM `lines` WHERE linename LIKE " + con.escape('%'+query+'%'), function(err,rows){
+DataProvider.prototype.searchLine = function(queryname, callback) {
+  query("SELECT * FROM lines WHERE linename LIKE $1", ['%' + queryname + '%'], function(err,rows){
     if(err) throw err;
 
     callback(err, rows);
@@ -77,9 +66,9 @@ DataProvider.prototype.searchLine = function(query, callback) {
 };
 
 DataProvider.prototype.getDirectedRoute = function(lineid, directionid, callback) {
-  con.query('SELECT directedroutes.id as id, directiondisplay, directionid, line_id, linename, lineoriginalid ' + 
-            'FROM directedroutes JOIN `lines` ON directedroutes.line_id = lines.id ' + 
-            'WHERE line_id = ? AND directionid = ?', [lineid, directionid], function(err,rows){
+  query('SELECT directedroutes.id as id, directiondisplay, directionid, line_id, linename, lineoriginalid ' + 
+            'FROM directedroutes JOIN lines ON directedroutes.line_id = lines.id ' + 
+            'WHERE line_id = $1 AND directionid = $2', [lineid, directionid], function(err,rows){
     if(err) throw err;
 
     callback(err, rows.length > 0 ? rows[0] : null);
@@ -88,8 +77,8 @@ DataProvider.prototype.getDirectedRoute = function(lineid, directionid, callback
 
 DataProvider.prototype.getLineRoutes = function(lineid, callback) {
   console.log("line " + lineid);
-  con.query('SELECT * FROM directedroutes ' + 
-            'WHERE line_id = ?', lineid, function(err,rows) {
+  query('SELECT * FROM directedroutes ' + 
+            'WHERE line_id = $1', [lineid], function(err,rows) {
     if(err) throw err;
 
     callback(err, rows);
@@ -97,12 +86,12 @@ DataProvider.prototype.getLineRoutes = function(lineid, callback) {
 };
 
 DataProvider.prototype.getLineStops = function(lineid, callback) {
-    con.query('SELECT stops.id as id, directiondisplay, directionid, latitude, line_id, localitycode, logicalid, longitude, operatorid, operatorname, originalid, route_id, stopname, linename ' +
+    query('SELECT stops.id as id, directiondisplay, directionid, latitude, line_id, localitycode, logicalid, longitude, operatorid, operatorname, originalid, route_id, stopname, linename ' +
       'FROM stopsbyroute ' +
       'JOIN stops ON stops.id = stopsbyroute.stop_id ' +
       'JOIN directedroutes ON stopsbyroute.route_id = directedroutes.id ' +
-      'JOIN `lines` ON directedroutes.line_id = lines.id ' + 
-      'WHERE line_id = ?', lineid, function(err, rows) {
+      'JOIN lines ON directedroutes.line_id = lines.id ' + 
+      'WHERE line_id = $1', [lineid], function(err, rows) {
       if(err) throw err;
       var stops = _.groupBy(rows, "directionid");
       
@@ -111,9 +100,9 @@ DataProvider.prototype.getLineStops = function(lineid, callback) {
 };
 
 DataProvider.prototype.getRouteStops = function(routeid, callback) {
-    con.query('SELECT * FROM stopsbyroute ' +
+    query('SELECT * FROM stopsbyroute ' +
       'JOIN stops ON stops.id = stopsbyroute.stop_id ' +
-      'WHERE route_id = ?', routeid, function(err, rows) {
+      'WHERE route_id = $1', [routeid], function(err, rows) {
       if(err) throw err;
 
       callback(err, rows);
@@ -122,10 +111,10 @@ DataProvider.prototype.getRouteStops = function(routeid, callback) {
 
 
 DataProvider.prototype.getRouteItineraries = function(routeId, callback) {
-    con.query('SELECT * FROM itinerarystopsequence ' + 
+    query('SELECT * FROM itinerarystopsequence ' + 
       'JOIN stops ON itinerarystopsequence.stop_id = stops.id ' + 
       'JOIN itineraries ON itinerarystopsequence.itin_id = itineraries.id ' + 
-      'WHERE itineraries.route_id = ?', routeId, function(err, rows) {
+      'WHERE itineraries.route_id = $1', [routeId], function(err, rows) {
       if(err) throw err;
 
 
@@ -168,8 +157,8 @@ DataProvider.prototype.getRouteItineraries = function(routeId, callback) {
 };
 
 DataProvider.prototype.getItineraryRides = function(itinId, callback) {
-    con.query('SELECT * FROM schedules JOIN rides ON schedules.ride_id = rides.id ' +
-      'WHERE rides.itin_id = ?', itinId, function(err, rows) {
+    query('SELECT * FROM schedules JOIN rides ON schedules.ride_id = rides.id ' +
+      'WHERE rides.itin_id = $1', [itinId], function(err, rows) {
       if(err) throw err;
 
       var allRides = _.groupBy(rows, "ride_id");
@@ -268,29 +257,29 @@ DataProvider.prototype.checkRideExistence = function(allItineraries, currRide, c
 
 DataProvider.prototype.setRecord = function(record, callback) {
   var date = moment(record.date).format('YYYY-MM-DD');  
-  con.query('SELECT * FROM records ' +
-      'WHERE ride_id = ? AND route_id = ? AND date = ?', [record.ride_id, record.route_id, date], function(err, rows) {
+  query('SELECT * FROM records ' +
+      'WHERE ride_id = $1 AND route_id = $2 AND date = $3', [record.ride_id, record.route_id, date], function(err, rows) {
       if(err) throw err;
 
       if(rows.length == 0) {
-        con.query('INSERT INTO records SET ?', record, function(err,res) {
+        query('INSERT INTO records (ride_id, route_id, date) VALUES ($1, $2, $3)', [record.ride_id, record.route_id, date], function(err,res) {
           if(err) throw err;
 
-          console.log('Created a new record with ID:', res.insertId);
-          callback(err, res);
+          console.log('Created a new record');
+          callback(err);
         });
       } else {
-        callback(err, rows[0]);
+        callback(err);
       }
   });
 };
 
 DataProvider.prototype.setRide = function(ride, callback) {
-  con.query('INSERT INTO rides SET ?', ride, function(err,res){
+  query('INSERT INTO rides (route_id, itin_id, deptime) VALUES ($1, $2, $3) RETURNING id', [ride.route_id, ride.itin_id, ride.deptime], function(err,res){
     if(err) throw err;
 
-    console.log('Created a new ride with ID:', res.insertId);
-    callback(err, res);
+    console.log('Created a new ride with ID:', res[0].id);
+    callback(err, res[0].id);
   });
 };
 
@@ -301,56 +290,57 @@ DataProvider.prototype.saveRide = function(itin_id, route_id, currRide, callback
   ride.route_id = route_id;
   ride.itin_id = itin_id;
   ride.deptime = currRide.schedules[0].scheduletime.format("YYYY-MM-DD HH:mm:ss");
-  DataProvider.prototype.setRide(ride, function(err, r) {
+  DataProvider.prototype.setRide(ride, function(err, rid) {
     if(err) throw err;
 
     var record = {};
     record.date = moment().format("YYYY-MM-DD");
     record.route_id = route_id;
-    record.ride_id = r.insertId;
+    record.ride_id = rid;
     DataProvider.prototype.setRecord(record, function(err, item){} );
 
     for(var i = 0; i < currRide.stopOrder.length; i++) {
       var sched = {};
-      sched.ride_id = r.insertId;
+      sched.ride_id = rid;
       sched.stop_id = currRide.stopOrder[i].stop_id;
       sched.scheduletime = currRide.schedules[i].scheduletime.format("YYYY-MM-DD HH:mm:ss");
       DataProvider.prototype.setSchedule(sched, function(error, item) {});
     }
-    callback(err, r);
+    callback(err, rid);
   });
 };
 
 
 DataProvider.prototype.setItinerary = function(itinerary, callback) {
-  con.query('INSERT INTO itineraries SET ?', itinerary, function(err,res){
+  query('INSERT INTO itineraries (route_id, description) VALUES ($1, $2) RETURNING id', [itinerary.route_id, itinerary.description], function(err,res){
     if(err) throw err;
 
-    console.log('Created a new itinerary with ID:', res.insertId);
-    callback(err, res);
+    console.log('Created a new itinerary with ID:', res[0].id);
+    callback(err, res[0].id);
   });
 };
 
 DataProvider.prototype.setSchedule = function(schedule, callback) {
-  con.query('INSERT INTO schedules SET ?', schedule, function(err,res){
+  query('INSERT INTO schedules (ride_id, stop_id, scheduletime) VALUES ($1, $2, $3)', [schedule.ride_id, schedule.stop_id, schedule.scheduletime], function(err,res){
     if(err) throw err;
 
-    console.log('Created a new schedule with ID:', res.insertId);
-    callback(err, res);
+    console.log('Created a new schedule');
+    callback(err);
   });
 };
 
 DataProvider.prototype.setItineraryStopSequence = function(items, callback) {
-  var postData = [items.length];
-  for( var i = 0; i < items.length; i++){
-     postData[i] = [ items[i].itin_id, items[i].stop_id, items[i].seqnumber ];
-  };
-  con.query('INSERT INTO itinerarystopsequence (itin_id, stop_id, seqnumber) VALUES ?', [postData], function(err,res){
-    if(err) throw err;
+  async.each(items, function(item, loopCallback) {
+    query('INSERT INTO itinerarystopsequence (itin_id, stop_id, seqnumber) VALUES ($1, $2, $3)', [item.itin_id, item.stop_id, item.seqnumber], function(err,res){
+      if(err) throw err;
 
-    console.log('Created a new itinerarystopsequence with ID:', res.insertId);
-    callback(err, res);
+      console.log('Created a new itinerarystopsequence');
+      loopCallback(err, res);
+    });
+  }, function(err) {
+    callback(err);
   });
+  
 };
 
 
@@ -360,19 +350,25 @@ DataProvider.prototype.getBuses = function(depId, arrId, route, callback) {
   var fetch = false;
   console.log(route);
   //We get all the itineraries for this route
-  con.query('SELECT id FROM itineraries ' +
-            'WHERE route_id = ?', route.route_id, function(err, rows) {
+  query('SELECT id FROM itineraries ' +
+            'WHERE route_id = $1', [route.route_id], function(err, rows) {
               if(err) throw err;
               //then find all those that have a sequence depstop/arrstop
               if(rows.length > 0) {
                   var iti = _.map(rows, 'id');
                   console.log(iti);
-                  con.query('SELECT DISTINCT a.itin_id ' + 
+
+                  var allParams = iti.concat([depId, arrId]);
+                  var params = _.map(iti, function(itin, idx) {
+                    return '$' + (idx + 1);
+                  });
+                
+                  query('SELECT DISTINCT a.itin_id ' + 
                     'FROM itinerarystopsequence AS a ' +
                     'JOIN itinerarystopsequence AS b ON a.itin_id=b.itin_id ' +
-                    'WHERE a.itin_id IN (?) AND a.stop_id = ? ' + 
-                    'AND b.stop_id = ? ' +
-                    'AND b.seqnumber > a.seqnumber', [iti, depId, arrId], function(err, rows) {
+                    'WHERE a.itin_id IN (' + params.join(',') + ') AND a.stop_id = $' + (iti.length + 1) + ' ' +
+                    'AND b.stop_id =$' + (iti.length + 2) + ' ' +
+                    'AND b.seqnumber > a.seqnumber', allParams, function(err, rows) {
         
                     if(err) throw err;
 
@@ -407,11 +403,16 @@ DataProvider.prototype.getItinerarySchedules = function(itins, depId, arrId, rou
   console.log(scheduleTime);
   var today = moment().format('YYYY-MM-DD');
   
-  con.query('SELECT * FROM records JOIN rides ON records.ride_id = rides.id ' +
+  var allParams = itins.concat([today, depId, arrId, scheduleTime]);
+  var params = _.map(itins, function(itin, idx) {
+    return '$' + (idx + 1);
+  });
+
+  query('SELECT * FROM records JOIN rides ON records.ride_id = rides.id ' +
             'JOIN schedules ON schedules.ride_id = rides.id ' +
-            'WHERE itin_id IN (?) AND date = ? ' +
-            'AND stop_id IN (?) ' +
-            'AND scheduletime >= ?', [itins, today, [depId, arrId], scheduleTime], function(err,records) {
+            'WHERE itin_id IN (' + params.join(',') + ') AND date = $' + (itins.length + 1) + ' ' +
+            'AND stop_id IN ($' + (itins.length + 2) + ", $" + (itins.length + 3) + ') ' +
+            'AND scheduletime >= $' + (itins.length + 4), allParams, function(err,records) {
       if(err) throw err;
 
       console.log("Found " + records.length + " schedules");
@@ -419,7 +420,7 @@ DataProvider.prototype.getItinerarySchedules = function(itins, depId, arrId, rou
       if(records.length > 0) {
         //Send results
         fetch = false;
-        con.query('SELECT * FROM stops WHERE id = ?', depId, function(err, stops) {
+        query('SELECT * FROM stops WHERE id = $1', [depId], function(err, stops) {
           
           //Group records by ride and take only those having 2 schedules (departure and arrival)
           var rides = _(records)
@@ -450,8 +451,13 @@ DataProvider.prototype.getItinerarySchedules = function(itins, depId, arrId, rou
       } else {
         //No results. So what do we fetch?
         
-        con.query('SELECT * FROM records JOIN rides ON records.ride_id = rides.id ' +
-            'WHERE itin_id IN (?) AND date = ? ', [itins, today], function(err,rows) {
+        var allParams = itins.concat([today]);
+        var params = _.map(itins, function(itin, idx) {
+          return '$' + (idx + 1);
+        });
+
+        query('SELECT * FROM records JOIN rides ON records.ride_id = rides.id ' +
+            'WHERE itin_id IN (' + params.join(',') + ') AND date = $' + (itins.length + 1), allParams, function(err,rows) {
             
             if(err) throw err;
 
