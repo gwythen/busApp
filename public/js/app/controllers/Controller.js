@@ -10,7 +10,7 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
             if(this.search.hasParameters()) {
                 this.fetchResults();
             } else {
-                App.appRouter.navigate("/settings");
+                App.appRouter.navigate("/settings", true);
                 this.settings();
             }
         },
@@ -18,8 +18,9 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
         settings: function() {
             var welcome = new WelcomeView({model: this.search});
             App.mainRegion.show(welcome);
+            document.body.className += "settings";
             welcome.on("fetchResults", function() {
-                this.fetchResults();
+                App.appRouter.navigate("", true);
             }, this);
         },
 
@@ -29,28 +30,27 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
             var searchParams = params ? params : {};
             this.search.set(params);
             this.search.fetch().done(function (data) {
-            // this.search.fetch({
-            //         data: $.param(searchParams)
-            //     }).done(function (data) {
-                    var results = self.search.get('results');
-                    if(results.length > 0) {
-                        var layout = new SwipableLayout();
-                        App.mainRegion.show(layout);
-                        for(var i=0; i < results.length; i++) {
-                            var nextBusView = new NextBusView({model: results.models[i]});
-                            layout.add(nextBusView, results.models[i].get("depHour"));
-                            nextBusView.on("fetchResults", function(params) {
-                                this.fetchResults(params);
-                            }, self);
-                        }
-                        layout.show();
-                    } else {
-                        var error = new ErrorMessage();
-                        error.set("message", "No results found");
-                        error.set("type", "notFound");
-                        App.mainRegion.show(new ErrorView({model: error}));
+                var results = self.search.get('results');
+                if(results.length > 0) {
+                    var layout = new SwipableLayout();
+                    document.body.className = "";
+                    App.mainRegion.show(layout);
+                    for(var i=0; i < results.length; i++) {
+                        var nextBusView = new NextBusView({model: results.models[i]});
+                        layout.add(nextBusView, results.models[i].get("depHour"));
+                        nextBusView.on("fetchResults", function(params) {
+                            this.fetchResults(params);
+                        }, self);
                     }
-                });
+                    layout.show();
+                } else {
+                    var error = new ErrorMessage();
+                    error.set("message", "No results found");
+                    error.set("type", "notFound");
+                    document.body.className = "";
+                    App.mainRegion.show(new ErrorView({model: error}));
+                }
+            });
         }
 
     });
