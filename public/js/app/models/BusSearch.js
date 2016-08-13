@@ -26,7 +26,7 @@ define([
         depStop = this.get("currArrStop");
         arrStop = this.get("currDepStop");
         direction = this.get("currDirection") ? "&direction=" + this.get("currDirection") : null;
-        revert = "&revert=true"
+        revert = "&revert=true";
       } else {
         if(now.getHours() > 12) {
           depStop = this.get("arrStop").logicalid;

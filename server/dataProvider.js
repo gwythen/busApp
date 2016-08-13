@@ -445,7 +445,6 @@ DataProvider.prototype.getItinerarySchedules = function(itins, depId, arrId, rou
                 results.push(result);
               }
           }
-          console.log(results);
           callback(err, results, fetch);
         });
       } else {

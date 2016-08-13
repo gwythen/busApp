@@ -34,6 +34,7 @@
     "pg-query": "^0.11.0",
     "pug": "^2.0.0-beta4",
     "request": "*",
+    "socket.io": "^1.4.8",
     "xml2js": "^0.4.17"
   }
 }

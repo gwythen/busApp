@@ -21,7 +21,7 @@ define([ 'marionette', 'handlebars', 'text!templates/nextBus.html'],
                     if(e.target.id == "submit") {
                         this.submit(e);
                     }
-                })
+                });
 			},
 
             onRender: function() {

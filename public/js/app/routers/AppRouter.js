@@ -3,7 +3,8 @@ define(['marionette', 'controllers/Controller'], function(Marionette, Controller
        //"index" must be a method in AppRouter's controller
        appRoutes: {
            "": "index",
-           "settings" : "settings"
+           "settings" : "settings",
+           "chat": "chat"
        }
    });
 });

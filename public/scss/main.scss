@@ -99,6 +99,13 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 	float:left;
 }
 
+.navbar-left {
+  float:left !important;
+}
+
+.header-icon {
+  height: 2rem;
+}
 .error-container {
   margin-top: $headerHeight;
   padding-top: 2rem;
@@ -464,3 +471,21 @@ span.glyphicon.glyphicon-sort {
     100%{transform:rotate(360deg);}
 }
 
+
+/* -------------- Chat -------------- */
+
+.chatView-container {
+  margin-left: -15px;
+  margin-right: -15px;
+  padding-top: 7rem;
+}
+
+.inputMessage {
+  height: 4rem;
+  border: 1px solid black;
+  position: fixed;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  bottom: 0;
+}

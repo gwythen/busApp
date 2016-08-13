@@ -10,6 +10,7 @@ require.config({
         "backbone":"../libs/backbone",
         "marionette":"../libs/backbone.marionette",
         "handlebars":"../libs/handlebars",
+        "socketio": "../libs/socketio",
 
         // Plugins
         "backbone.validateAll":"../libs/plugins/Backbone.validateAll",
@@ -45,13 +46,13 @@ require.config({
           "exports": "Swiper"
         },
         // Backbone.validateAll plugin (https://github.com/gfranko/Backbone.validateAll)
-        "backbone.validateAll":["backbone"],
+        "backbone.validateAll":["backbone"]
 
     }
 });
 
 // Includes Desktop Specific JavaScript files here (or inside of your Desktop router)
-require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "jqueryui", "typeahead", "bloodhound","bootstrap", "swiper", "backbone.validateAll"],
+require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "jqueryui", "typeahead", "bloodhound","bootstrap", "swiper", "backbone.validateAll", "socketio"],
     function (App, AppRouter, Controller) {
         App.appRouter = new AppRouter({
             controller:new Controller()

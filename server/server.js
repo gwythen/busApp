@@ -1,9 +1,10 @@
 // DEPENDENCIES
 // ============
 var express = require("express"),
-    http = require("http"),
-    pug = require("pug"),
     port = (process.env.PORT || 8080),
+    
+    pug = require("pug"),
+    
     DataProvider = require('./dataProvider').DataProvider,
     server = module.exports = express(),
     request = require('request'),
@@ -11,10 +12,13 @@ var express = require("express"),
     async = require('async'),
     moment = require('moment'),
     _ = require('lodash');
+    
 
 var DataProvider = new DataProvider('localhost', 27017);
 var BusScraper = require('./busScraper').BusScraper;
 var BusScraper = new BusScraper(DataProvider);
+
+var numUsers = 0;
 
 
 // SERVER CONFIGURATION
@@ -41,6 +45,9 @@ var rootUrl = 'http://www.ceparou06.fr/';
 // SERVER
 // ======
 
+var http = require("http").createServer(server).listen(port);
+var io = require('socket.io')(http);
+
 
 getBuses = function(depId, arrId, lineId, direction, revert, mainCallback) {
     //First we get all the possible stops by directedroute for the line
@@ -58,8 +65,6 @@ getBuses = function(depId, arrId, lineId, direction, revert, mainCallback) {
         }
         var finalRes = [];
         async.eachSeries(directions, function(direction, loopCallback) {
-            console.log("yoyoyo");
-            console.log(direction);
             var dep = _.find(direction, ['logicalid', depId]);
             var arr = _.find(direction, ['logicalid', arrId]);
 
@@ -69,12 +74,9 @@ getBuses = function(depId, arrId, lineId, direction, revert, mainCallback) {
             route.directiondisplay = dep.directiondisplay;
             route.linename = dep.linename.split(" - ")[0];
             console.log("stops for ids " + depId + " " + arrId);
-            console.log(dep);
-            console.log(arr);
             if(dep && arr) {
                 DataProvider.getBuses(dep.id, arr.id, route, function(error, results, fetch) {
                     console.log("searched for buses");
-                    console.log(results);
                     if(results) {
                         finalRes = results;
                         var fakeErr = new Error();
@@ -105,7 +107,6 @@ getBuses = function(depId, arrId, lineId, direction, revert, mainCallback) {
             }
         }, function(err) {
             console.log("returning results");
-            console.log(finalRes);
             mainCallback(_.take(finalRes, 5));
         });
     });
@@ -145,7 +146,6 @@ server.get('/api/searchLine/:query', function(req, res) {
 server.get('/api/getLineStops', function(req, res) {
     console.log("fetching stops for line " + req.query.lineid);
     DataProvider.getLineStops(req.query.lineid, function(err, stops) {
-        console.log(stops);
         return res.send(stops);
     });
 });
@@ -155,7 +155,143 @@ server.get('*', function(req, res) {
 });
 
 
-// Start Node.js Server
-http.createServer(server).listen(port);
+
+// io.sockets.on('connection', function (socket) {
+
+//     // when the client emits 'adduser', this listens and executes
+//     socket.on('adduser', function(username){
+//         // store the username in the socket session for this client
+//         socket.username = username;
+//         // store the room name in the socket session for this client
+//         socket.room = 'room1';
+//         // add the client's username to the global list
+//         usernames[username] = username;
+//         // send client to room 1
+//         socket.join('room1');
+//         // echo to client they've connected
+//         socket.emit('updatechat', 'SERVER', 'you have connected to room1');
+//         // echo to room 1 that a person has connected to their room
+//         socket.broadcast.to('room1').emit('updatechat', 'SERVER', username + ' has connected to this room');
+//         socket.emit('updaterooms', rooms, 'room1');
+//     });
+
+//     // when the client emits 'sendchat', this listens and executes
+//     socket.on('sendchat', function (data) {
+//         // we tell the client to execute 'updatechat' with 2 parameters
+//         io.sockets.in(socket.room).emit('updatechat', socket.username, data);
+//     });
+
+//     socket.on('switchRoom', function(newroom){
+//         // leave the current room (stored in session)
+//         socket.leave(socket.room);
+//         // join new room, received as function parameter
+//         socket.join(newroom);
+//         socket.emit('updatechat', 'SERVER', 'you have connected to '+ newroom);
+//         // sent message to OLD room
+//         socket.broadcast.to(socket.room).emit('updatechat', 'SERVER', socket.username+' has left this room');
+//         // update socket session room title
+//         socket.room = newroom;
+//         socket.broadcast.to(newroom).emit('updatechat', 'SERVER', socket.username+' has joined this room');
+//         socket.emit('updaterooms', rooms, newroom);
+//     });
+
+//     // when the user disconnects.. perform this
+//     socket.on('disconnect', function(){
+//         // remove the username from global usernames list
+//         delete usernames[socket.username];
+//         // update list of users in chat, client-side
+//         io.sockets.emit('updateusers', usernames);
+//         // echo globally that this client has left
+//         socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
+//         socket.leave(socket.room);
+//     });
+// });
+
+
+io.on('connection', function(socket) {
+  var addedUser = false;
+
+  // when the client emits 'new message', this listens and executes
+  socket.on('new message', function (data) {
+    // we tell the client to execute 'new message'
+    socket.broadcast.emit('new message', {
+      username: socket.username,
+      message: data
+    });
+  });
+
+
+  socket.on('add user', function(data) {
+    // we store the username in the socket session for this client
+    if (addedUser) return;
+    socket.username = data.user;
+    socket.usercolor = data.color;
+    ++numUsers;
+    addedUser = true;
+    socket.join(data.room);
+    socket.emit('login', {
+      numUsers: numUsers,
+      username: socket.username
+    });
+    // echo globally (all clients) that a person has connected
+    socket.broadcast.emit('user joined', {
+      username: socket.username,
+      numUsers: numUsers
+    });
+
+      console.log("you're in!");
+      // authenticated = true;
+      // we store the username in the session for this client
+      // var session = req.session;
+      // session[data.room] = {};
+
+      // session[data.room].authenticated = true;
+      // session[data.room].user = data.username;
+      // session[data.room].color = data.color;
+  });
+
+    socket.on('switchRoom', function(newroom){
+        // leave the current room (stored in session)
+        socket.leave(socket.room);
+        // join new room, received as function parameter
+        socket.join(newroom);
+        socket.emit('updatechat', 'SERVER', 'you have connected to '+ newroom);
+        // sent message to OLD room
+        socket.broadcast.to(socket.room).emit('updatechat', 'SERVER', socket.username+' has left this room');
+        // update socket session room title
+        socket.room = newroom;
+        socket.broadcast.to(newroom).emit('updatechat', 'SERVER', socket.username+' has joined this room');
+        socket.emit('updaterooms', rooms, newroom);
+    });
+
+  // when the client emits 'typing', we broadcast it to others
+  socket.on('typing', function () {
+    socket.broadcast.emit('typing', {
+      username: socket.username
+    });
+  });
+
+  // when the client emits 'stop typing', we broadcast it to others
+  socket.on('stop typing', function () {
+    socket.broadcast.emit('stop typing', {
+      username: socket.username
+    });
+  });
+
+  // when the user disconnects.. perform this
+  socket.on('disconnect', function () {
+    if (addedUser) {
+      --numUsers;
+
+      // echo globally that this client has left
+      socket.broadcast.emit('user left', {
+        username: socket.username,
+        numUsers: numUsers
+      });
+    }
+  });
+
+});
+
 
 console.log('Welcome to BusApp!\n\nPlease go to http://localhost:' + port + ' to start using it');
