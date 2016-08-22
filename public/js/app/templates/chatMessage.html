@@ -9,10 +9,14 @@
 {{#if isText}}
 <div class="message">
 {{/if}}
+
+{{#if isFB}}
+<div class="message fb-message">
+{{/if}}
 	
-	{{#unless isLog}}
+	{{#if username}}
 	<span class="username" style="color: {{getUsernameColor}};">{{username}}</span>
-	{{/unless}}
+	{{/if}}
 	<span class="messageBody">{{message}}</span>
 	<span class="messagetime">{{getMsgTime}}</span>
 </div>

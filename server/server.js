@@ -163,6 +163,17 @@ app.get('/api/messages/:lineid/', function(req, res) {
     });
 });
 
+app.get('/api/fbinfo/:lineid', function(req, res) {
+    if(req.params.lineid = 230) {
+      request('https://graph.facebook.com//220546957969451/feed?access_token=1140637272677807|077065e80e85a09ad6415436f4f6622d', function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+          console.log(response);
+          return res.send(JSON.parse(response.body));
+        }
+      });
+    }
+})
+
 app.get('*', function(req, res) {
     res.render('index');
 });
