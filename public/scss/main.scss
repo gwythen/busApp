@@ -104,7 +104,11 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   height: 2rem;
 }
 .error-container {
-  padding-top: 5rem;
+  padding-top: 6rem;
+  padding-right: 2rem;
+  h1, h2 {
+    color: $contentColor;
+  } 
 }
 
 .welcome-content {
@@ -522,6 +526,8 @@ span.glyphicon.glyphicon-sort {
   display: block !important;
   margin-left: 2rem;
   margin-right: 2rem;
+  margin-top: 0.8rem;
+  margin-bottom: 0.8rem;
   .username {
     margin-right: 1rem;
   }
