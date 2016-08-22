@@ -1,51 +1,12 @@
 @import "compass";
 
-@font-face {
-    font-family: "Bariol-regular";
-    src: url(../fonts/Bariol_Regular.otf) format("truetype");
-}
-
-@font-face {
-    font-family: "Bariol-light";
-    src: url(../fonts/Bariol_Light.otf) format("truetype");
-}
-
-@font-face {
-    font-family: "Bariol-bold";
-    src: url(../fonts/Bariol_Bold.otf) format("truetype");
-}
-
-@font-face {
-    font-family: "Bariol-thin";
-    src: url(../fonts/Bariol_Thin.otf) format("truetype");
-}
-
-@font-face {
-    font-family: "Lato-regular";
-    src: url(../fonts/Lato-Reg.ttf) format("truetype");
-}
-
-@font-face {
-    font-family: "Lato-light";
-    src: url(../fonts/Lato-Lig.ttf) format("truetype");
-}
-
-@font-face {
-    font-family: "Lato-bold";
-    src: url(../fonts/Lato-Bol.ttf) format("truetype");
-}
-
-@font-face {
-    font-family: "Lato-hairline";
-    src: url(../fonts/Lato-Hai.ttf) format("truetype");
-}
-
 $backgroundColor: #0578b3;
 $contentColor: #5e5e5e;
 $labelColor: #393939;
 
 html {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
+  font-family: 'Lato', sans-serif;
 }
 
 body {
@@ -92,12 +53,15 @@ header {
 }
 
 p, legend, h1, h2, h3, h4, h5, h6 {
-    font-family: Lato-regular;
+    font-weight: 400;
     color: white;
 }
 
 .navbar {
-  padding: 2rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
 }
 .navbar .nav {
   float: right;}
@@ -121,7 +85,7 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 
 .navbar a {
   text-decoration: none;
-  font-size:2.5rem;
+  font-size:3.5rem;
   color: $contentColor;
   &:active {
     color: $backgroundColor;
@@ -144,12 +108,12 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 }
 
 .welcome-content {
-  padding-top: 5rem;
+  padding-top: 4rem;
 }
 
 .appHeader {
   font-size: 3rem;
-  font-family: Lato-Light;
+  font-weight: 300;
   margin-bottom:3rem;
 }
 
@@ -165,6 +129,8 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   text-align: left;
   p {
     font-size: 1.6rem;
+    margin-top: 0.4rem;
+    margin-bottom:0.4rem;
   }
 }
 
@@ -295,7 +261,7 @@ input.typeahead.tt-hint {
 
 .nextHeader {
 	font-size: 2.2rem;
-	font-family: Lato-Light;
+	font-weight: 300;
   line-height:1;
   //text-transform:uppercase;
   float: right;
@@ -306,7 +272,7 @@ input.typeahead.tt-hint {
 
 .nextLabel {
   font-size: 1.5rem;
-  font-family: Lato-Regular;
+  font-weight: 400;
   margin-top: 2rem;
   float: right;
   clear: both;
@@ -317,13 +283,13 @@ input.typeahead.tt-hint {
 .depStop {
   text-transform:uppercase;
   font-size: 1.6rem;
-  font-family: Lato-light;
+  font-weight: 300;
   opacity: 0.6;
   margin-bottom: 0.5rem;
 }
 
 .nextTime {
-	font-family: Lato-hairline;
+	font-weight: 100;
 	font-size: 9rem;
 	line-height: 0.75;
   float: right;
@@ -333,13 +299,15 @@ input.typeahead.tt-hint {
 
 .counter-container {
   margin-top:0.9rem;
+  font-weight: 300;
+  font-size: 0.6rem;
   float: right;
   clear: both;
 }
 
 .nextCounter {
     font-size: 1.6rem;
-    font-family: Lato-light;
+    font-weight: 300;
     -webkit-transition: color 0.5s linear;
     -moz-transition: color 0.5s linear;
     -ms-transition: color 0.5s linear;
@@ -358,7 +326,7 @@ input.typeahead.tt-hint {
 }
 
 .nextArrival {
-	font-family: Lato-Light;
+	font-weight: 300;
 	font-size: 1.4rem;
 	margin-top: 0.3rem;
 }
