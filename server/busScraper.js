@@ -212,11 +212,10 @@ BusScraper = function(DataProvider) {
 
 							DataProvider.setItineraryStopSequence(allItin.stopOrder, function(error) {
 								allItineraries.push(allItin);
+								DataProvider.saveRide(itinid, directedRoute.id, currRide, function(error, rideid) {
+									callback(null);
+								});
 							});
-							DataProvider.saveRide(itinid, directedRoute.id, currRide, function(error, rideid) {
-								callback(null);
-							});
-							
 		                } else {
 		                   console.log("Error: itinerary not saved");
 		                }
@@ -234,8 +233,9 @@ BusScraper = function(DataProvider) {
 			    record.date = moment().format('YYYY-MM-DD');
 			    record.route_id = directedRoute.id;
 			    record.ride_id = currRide.id;
-			    DataProvider.setRecord(record, function(err, item){} );
-			    callback();
+			    DataProvider.setRecord(record, function(err, item){
+			    	callback();
+			    });
 			}
 		},
 		getAllLines: function(topCallback) {

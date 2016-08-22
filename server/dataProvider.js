@@ -161,8 +161,6 @@ DataProvider.prototype.getItineraryRides = function(itinId, callback) {
       'WHERE rides.itin_id = $1', [itinId], function(err, rows) {
       if(err) throw err;
 
-      var allRides = _.groupBy(rows, "ride_id");
-
       var addRide = function(i, row) {
         allRides[i] = {};
         allRides[i].id = row.ride_id;
@@ -178,7 +176,8 @@ DataProvider.prototype.getItineraryRides = function(itinId, callback) {
 
       var allRides = [];
       var i = 0;
-      rows.forEach(function(row) {
+      var sortedrows = _.sortBy(rows, "id");
+      sortedrows.forEach(function(row) {
           if(!allRides[i]) {
             addRide(i, row);
           } 
@@ -189,12 +188,17 @@ DataProvider.prototype.getItineraryRides = function(itinId, callback) {
           addSchedule(i, row);            
       });
 
+      var allSorted = [];
       allRides.forEach(function(ride) {
-        _.sortBy(ride.schedules, "scheduletime");
+        var newride = {};
+        newride.id = ride.id;
+        newride.schedules = _.sortBy(ride.schedules, "scheduletime");
+        allSorted.push(newride);
       });
 
-      console.log("fetched " + allRides.length + " rides");
-      callback(err, allRides);
+      console.log("fetched " + allSorted.length + " rides");
+
+      callback(err, allSorted);
     });
 };
 
@@ -229,6 +233,7 @@ DataProvider.prototype.checkRideExistence = function(allItineraries, currRide, c
           var currsched = _.sortBy(currRide.schedules, 'scheduletime');
           for(var z = 0; z < rides.length; z++) {
               var ridesched = rides[z].schedules;
+
               if(currsched.length == ridesched.length) {
                   var allsched = true;
                   for(var x = 0; x < ridesched.length; x++) {
@@ -299,14 +304,23 @@ DataProvider.prototype.saveRide = function(itin_id, route_id, currRide, callback
     record.ride_id = rid;
     DataProvider.prototype.setRecord(record, function(err, item){} );
 
-    for(var i = 0; i < currRide.stopOrder.length; i++) {
-      var sched = {};
-      sched.ride_id = rid;
-      sched.stop_id = currRide.stopOrder[i].stop_id;
-      sched.scheduletime = currRide.schedules[i].scheduletime.format("YYYY-MM-DD HH:mm:ss");
-      DataProvider.prototype.setSchedule(sched, function(error, item) {});
-    }
-    callback(err, rid);
+    var currIndex = 0;
+    var maxIndex = currRide.stopOrder.length;
+    async.doWhilst(
+      function (docallback) {
+        var sched = {};
+        sched.ride_id = rid;
+        sched.stop_id = currRide.stopOrder[currIndex].stop_id;
+        sched.scheduletime = currRide.schedules[currIndex].scheduletime.format("YYYY-MM-DD HH:mm:ss");
+        DataProvider.prototype.setSchedule(sched, function(error, item) {
+          currIndex++;
+          docallback();
+        });      
+      },
+      function () { return currIndex < maxIndex; },
+      function (err) {
+        callback(err, rid);
+      });
   });
 };
 
