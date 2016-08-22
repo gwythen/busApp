@@ -6,7 +6,7 @@ var express = require("express"),
     pug = require("pug"),
     
     DataProvider = require('./dataProvider').DataProvider,
-    server = module.exports = express(),
+    //server = module.exports = express(),
     request = require('request'),
     jsdom = require('jsdom').jsdom,
     async = require('async'),
@@ -20,24 +20,26 @@ var BusScraper = new BusScraper(DataProvider);
 
 var numUsers = 0;
 
+var app = express();
+
 
 // SERVER CONFIGURATION
 // ====================
-server.configure(function () {
+app.configure(function () {
 
-    server.use(express["static"](__dirname + "/../public"));
+    app.use(express["static"](__dirname + "/../public"));
 
-    server.use(express.errorHandler({
+    app.use(express.errorHandler({
 
         dumpExceptions:true,
 
         showStack:true
 
     }));
-    server.set('views', __dirname + '/views');
-    server.set('view engine', 'pug');
+    app.set('views', __dirname + '/views');
+    app.set('view engine', 'pug');
 
-    server.use(server.router);
+    app.use(app.router);
 });
 
 var rootUrl = 'http://www.ceparou06.fr/';
@@ -45,8 +47,12 @@ var rootUrl = 'http://www.ceparou06.fr/';
 // SERVER
 // ======
 
-var http = require("http").createServer(server).listen(port);
-var io = require('socket.io')(http);
+
+var server = app.listen(port);
+var io = require('socket.io').listen(server);
+
+// var http = require("http").createServer(server).listen(port);
+// var io = require('socket.io')(http);
 
 
 getBuses = function(depId, arrId, lineId, direction, revert, mainCallback) {
@@ -116,7 +122,7 @@ getBuses = function(depId, arrId, lineId, direction, revert, mainCallback) {
 // ROUTER
 // ======
 
-server.get('/api/reset/:id/:code', function(req, res) {
+app.get('/api/reset/:id/:code', function(req, res) {
     if(req.params.id == "domenico" && req.params.code == 151086) {
         DataProvider.reset(function() {});
         return res.send("done!");
@@ -125,39 +131,39 @@ server.get('/api/reset/:id/:code', function(req, res) {
     }
 });
 
-server.get('/', function(req, res) {+
+app.get('/', function(req, res) {+
     res.render('index');
 });
 
-server.get('/api/search', function(req, res) {
+app.get('/api/search', function(req, res) {
     getBuses(req.query.depStop, req.query.arrStop, req.query.line, req.query.direction, req.query.revert, function(results) {
         console.log("returning " + results.length + " results");
         return res.send(results);
     });
 });
 
-server.get('/api/searchLine/:query', function(req, res) {
+app.get('/api/searchLine/:query', function(req, res) {
     DataProvider.searchLine(req.params.query, function(err, results) {
         console.log("returning " + results.length + " results");
         return res.send(results);
     });
 });
 
-server.get('/api/getLineStops', function(req, res) {
+app.get('/api/getLineStops', function(req, res) {
     console.log("fetching stops for line " + req.query.lineid);
     DataProvider.getLineStops(req.query.lineid, function(err, stops) {
         return res.send(stops);
     });
 });
 
-server.get('/api/messages/:lineid/', function(req, res) {
+app.get('/api/messages/:lineid/', function(req, res) {
     DataProvider.getMessages(req.params.lineid, req.query.index, req.query.qty, function(err, results) {
         console.log("returning " + results.length + " messages");
         return res.send(results);
     });
 });
 
-server.get('*', function(req, res) {
+app.get('*', function(req, res) {
     res.render('index');
 });
 

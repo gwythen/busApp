@@ -81,7 +81,7 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
         },
 
         joinChat: function(callback) {
-            App.socket = io.connect("http://localhost:8080");
+            App.socket = io();
             var that = this;
             App.socket.on('connect', function(){
                 that.joinedChat = true;
