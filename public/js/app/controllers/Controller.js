@@ -4,15 +4,18 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
         initialize:function (options) {
             App.headerRegion.show(new HeaderView());
             this.search = new BusSearch();
+            this.joinedChat = false;
         },
 
         index:function () {
             if(this.search.hasParameters()) {
-                this.joinChatRoom();
+                if(!this.joinedChat) {
+                    this.joinChat();
+                }
+                
                 this.fetchResults();
             } else {
                 App.appRouter.navigate("/settings", true);
-                // this.settings();
             }
         },
 
@@ -21,17 +24,25 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
             App.mainRegion.show(welcome);
             document.body.className += "settings";
             welcome.on("fetchResults", function() {
-                this.joinChatRoom();
+                if(!this.joinedChat) {
+                    this.joinChat();
+                }
                 App.appRouter.navigate("", true);
             }, this);
         },
 
         chat: function() {
+            var that = this;
             if(this.search.hasParameters()) {
-                this.joinChatRoom(function() {
-                    var chat = new ChatView();
+                if(!this.joinedChat) {
+                    this.joinChat(function() {
+                        var chat = new ChatView({line: that.search.get("line")});
+                        App.mainRegion.show(chat);
+                    });
+                } else {
+                    var chat = new ChatView({line: that.search.get("line")});
                     App.mainRegion.show(chat);
-                });
+                }
             } else {
                 App.appRouter.navigate("/settings", true);
                 // this.settings();
@@ -68,33 +79,13 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
             });
         },
 
-        joinChatRoom: function(callback) {
-            var username = "yoyo";
-            var color = this.getUsernameColor(username);
-            var room = "ROOM";
-
+        joinChat: function(callback) {
             App.socket = io.connect("http://localhost:8080");
-
+            var that = this;
             App.socket.on('connect', function(){
-                App.socket.emit('add user', {user: username, color: color, room: room});
-                callback();
+                that.joinedChat = true;
+                callback ? callback() : null;
             });            
-        },
-
-        getUsernameColor: function(username) {
-            var COLORS = [
-              '#e21400', '#91580f', '#f8a700', '#f78b00',
-              '#58dc00', '#287b00', '#a8f07a', '#4ae8c4',
-              '#3b88eb', '#3824aa', '#a700ff', '#d300e7'
-            ];
-          // Compute hash code
-          var hash = 7;
-          for (var i = 0; i < username.length; i++) {
-             hash = username.charCodeAt(i) + (hash << 5) - hash;
-          }
-          // Calculate color
-          var index = Math.abs(hash % COLORS.length);
-          return COLORS[index];
         },
 
     });
