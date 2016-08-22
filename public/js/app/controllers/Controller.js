@@ -37,15 +37,16 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
                 if(!this.joinedChat) {
                     this.joinChat(function() {
                         var chat = new ChatView({line: that.search.get("line")});
+                        document.body.className = "chat";
                         App.mainRegion.show(chat);
                     });
                 } else {
                     var chat = new ChatView({line: that.search.get("line")});
+                    document.body.className = "chat";
                     App.mainRegion.show(chat);
                 }
             } else {
                 App.appRouter.navigate("/settings", true);
-                // this.settings();
             }
             
         },

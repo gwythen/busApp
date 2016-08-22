@@ -52,15 +52,36 @@ body {
 	color: $contentColor;
   background-color: #F8FDFF;
   margin: 0;
+  .back-icon {
+    display: none;
+  }
+  .gear-icon {
+    display: block;
+  }
 }
 
 body.settings {
   background-color: $backgroundColor;
-  .navbar-default .navbar-nav > li > a {
+  .navbar a {
     color: white;
-    &:hover {
-      color: white;
+    &:active {
+      color: $backgroundColor;
     }
+  }
+  .back-icon {
+    display: block;
+  }
+  .gear-icon {
+    display: none;
+  }
+}
+
+body.chat {
+  .back-icon {
+    display: block;
+  }
+  .gear-icon {
+    display: none;
   }
 }
 
@@ -96,6 +117,15 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   background-color: transparent;
   border: none;
   height: 53px;
+}
+
+.navbar a {
+  text-decoration: none;
+  font-size:2.5rem;
+  color: $contentColor;
+  &:active {
+    color: $backgroundColor;
+  }
 }
 
 .navbar-header {
