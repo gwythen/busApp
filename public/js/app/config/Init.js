@@ -5,7 +5,6 @@ require.config({
     paths:{
         // Core Libraries
         "jquery":"../libs/jquery",
-        "jqueryui":"../libs/jqueryui",
         "underscore":"../libs/lodash",
         "backbone":"../libs/backbone",
         "marionette":"../libs/backbone.marionette",
@@ -15,7 +14,6 @@ require.config({
 
         // Plugins
         "backbone.validateAll":"../libs/plugins/Backbone.validateAll",
-        "bootstrap":"../libs/plugins/bootstrap",
         "typeahead":"../libs/plugins/typeahead.jquery",
         "bloodhound":"../libs/plugins/bloodhound",
         "text":"../libs/plugins/text",
@@ -24,7 +22,6 @@ require.config({
     // Sets the configuration for your third party scripts that are not AMD compatible
     shim:{
         "bootstrap":["jquery"],
-        "jqueryui":["jquery"],
         "typeahead":["jquery"],
         "bloodhound": {
            "deps": ['jquery'],
@@ -53,7 +50,7 @@ require.config({
 });
 
 // Includes Desktop Specific JavaScript files here (or inside of your Desktop router)
-require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "jqueryui", "typeahead", "bloodhound","bootstrap", "swiper", "backbone.validateAll", "socketio", "moment"],
+require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "typeahead", "bloodhound", "swiper", "backbone.validateAll", "socketio", "moment"],
     function (App, AppRouter, Controller) {
         App.appRouter = new AppRouter({
             controller:new Controller()

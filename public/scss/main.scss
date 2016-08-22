@@ -1,5 +1,4 @@
 @import "compass";
-@import url("bootstrap.css");
 
 @font-face {
     font-family: "Bariol-regular";
@@ -42,13 +41,17 @@
 }
 
 $backgroundColor: #0578b3;
-$headerHeight: 53px;
 $contentColor: #5e5e5e;
 $labelColor: #393939;
+
+html {
+  font-size: 0.7rem;
+}
 
 body {
 	color: $contentColor;
   background-color: #F8FDFF;
+  margin: 0;
 }
 
 body.settings {
@@ -72,11 +75,11 @@ p, legend, h1, h2, h3, h4, h5, h6 {
     color: white;
 }
 
-.navbar .nav {
-  float: right;
-  margin-right: -15px;
-  margin-top: 10px;
+.navbar {
+  padding: 2rem;
 }
+.navbar .nav {
+  float: right;}
 
 .navbar-inner {
 	padding-right:0;
@@ -107,13 +110,11 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   height: 2rem;
 }
 .error-container {
-  margin-top: $headerHeight;
-  padding-top: 2rem;
+  padding-top: 5rem;
 }
 
 .welcome-content {
-  margin-top: $headerHeight;
-  padding-top: 2rem;
+  padding-top: 5rem;
 }
 
 .appHeader {
@@ -246,6 +247,8 @@ input.typeahead.tt-hint {
   padding:1.2rem 5rem;
   color: white;
   width:100%;
+  font-size: 2rem;
+  border: 1px solid white;
 }
 
 .right-aligned {
@@ -254,6 +257,10 @@ input.typeahead.tt-hint {
 
 .center-aligned {
 	text-align: center;
+}
+
+.nextBus-content {
+  padding-right: 2rem;
 }
 
 .nextHeader {
@@ -373,10 +380,6 @@ span.glyphicon.glyphicon-sort {
   z-index: 0;
 }
 
-.swiper-content .swiper-slide {
-	padding-right: 2rem;
-}
-
 .tab-label {
 	margin:0;
 	font-size: 2rem;
@@ -490,8 +493,6 @@ span.glyphicon.glyphicon-sort {
 /* -------------- Chat -------------- */
 
 .chatView-container {
-  margin-left: -15px;
-  margin-right: -15px;
   padding-top: 7rem;
 }
 
@@ -503,15 +504,19 @@ span.glyphicon.glyphicon-sort {
   margin: 0;
   padding: 0;
   bottom: 0;
+  font-size: 1.5rem;
+  padding-left: 1rem;
 }
 
 .log {
   display: block !important;
   margin-left: 2rem;
   margin-right: 2rem;
+  font-size:1.5rem;
 }
 
 .message {
+  font-size:1.5rem;
   display: block !important;
   margin-left: 2rem;
   margin-right: 2rem;

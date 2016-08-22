@@ -2,7 +2,7 @@
     function (App, Marionette, Handlebars, underscore, moment, ChatCollection, ChatMessage, template, messageTemplate) {
         
         var MessageItem = Marionette.ItemView.extend({
-          className: "message",
+          className: "message-container",
           modelEvents: {
             "change": "render"
           },
