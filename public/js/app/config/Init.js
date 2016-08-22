@@ -11,6 +11,7 @@ require.config({
         "marionette":"../libs/backbone.marionette",
         "handlebars":"../libs/handlebars",
         "socketio": "../libs/socketio",
+        "moment": "../libs/moment",
 
         // Plugins
         "backbone.validateAll":"../libs/plugins/Backbone.validateAll",
@@ -52,7 +53,7 @@ require.config({
 });
 
 // Includes Desktop Specific JavaScript files here (or inside of your Desktop router)
-require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "jqueryui", "typeahead", "bloodhound","bootstrap", "swiper", "backbone.validateAll", "socketio"],
+require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "jqueryui", "typeahead", "bloodhound","bootstrap", "swiper", "backbone.validateAll", "socketio", "moment"],
     function (App, AppRouter, Controller) {
         App.appRouter = new AppRouter({
             controller:new Controller()
