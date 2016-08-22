@@ -113,6 +113,7 @@ define( [ 'App', 'marionette', 'handlebars', 'collections/StopCollection', 'text
             },
 
             submit: function(e) {
+                this.model.setInLocalStorage();
                 e.preventDefault();
                 this.trigger('fetchResults');
             },
