@@ -541,7 +541,7 @@ DataProvider.prototype.getMessages = function(lineid, index, qty, callback) {
       'ORDER BY id DESC LIMIT $1', [index + qty], function(err, rows) {
       if(err) throw err;
 
-      var filteredRows = rows.splice(index, qty);
+      var filteredRows = _.sortBy(rows.splice(index, qty), "time");
       callback(err, filteredRows);
     });
 };
