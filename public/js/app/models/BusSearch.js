@@ -44,57 +44,57 @@ define([
       }
       
       return url;
-  },
+    },
   
-  parse: function(response) {
-        this.set({
-          results: new ResultCollection(response)
-        });
-        if(response.length) {
-          this.set("currDirection", response[0].direction);
-        }
-  },
-
-  fetchFromLocalStorage: function() {
-    if(localStorage.getItem('busApp')) {
-      try {
-        var busAppData = JSON.parse(localStorage.getItem('busApp'));
-        console.log(busAppData);
-        this.set("line", busAppData.line);
-        this.set("depStop", busAppData.outDepStop);
-        this.set("arrStop",  busAppData.outArrStop);
-        return true;
-      } catch (e) {
-          return false;
+    parse: function(response) {
+      this.set({
+        results: new ResultCollection(response)
+      });
+      if(response.length) {
+        this.set("currDirection", response[0].direction);
       }
-    } else {
-      return false;
-    }
+    },
 
-  },
-  
-  setInLocalStorage: function() {
-    if(this.has("line") && this.get("depStop") && this.get("arrStop")) {
-      var busAppData = {};
-      busAppData.line = this.get("line");
-      busAppData.outDepStop = this.get("depStop");
-      busAppData.outArrStop = this.get("arrStop");
-      localStorage.setItem("busApp", JSON.stringify(busAppData));
-    }
-  },
+    fetchFromLocalStorage: function() {
+      if(localStorage.getItem('busApp')) {
+        try {
+          var busAppData = JSON.parse(localStorage.getItem('busApp'));
+          console.log(busAppData);
+          this.set("line", busAppData.line);
+          this.set("depStop", busAppData.depStop);
+          this.set("arrStop",  busAppData.arrStop);
+          return true;
+        } catch (e) {
+            return false;
+        }
+      } else {
+        return false;
+      }
 
-  submit: function(e) {
-      e.preventDefault();
-      this.trigger('fetchResults');
-  },
-  
-  hasParameters: function() {
-    if(this.has("line") && this.has("depStop") && this.has("arrStop")) {
-      return true;
-    } else {
-      return false;
+    },
+    
+    setInLocalStorage: function() {
+      if(this.has("line") && this.get("depStop") && this.get("arrStop")) {
+        var busAppData = {};
+        busAppData.line = this.get("line");
+        busAppData.depStop = this.get("depStop");
+        busAppData.arrStop = this.get("arrStop");
+        localStorage.setItem("busApp", JSON.stringify(busAppData));
+      }
+    },
+
+    submit: function(e) {
+        e.preventDefault();
+        this.trigger('fetchResults');
+    },
+    
+    hasParameters: function() {
+      if(this.has("line") && this.has("depStop") && this.has("arrStop")) {
+        return true;
+      } else {
+        return false;
+      }
     }
-  }
 
   });
   
