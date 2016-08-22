@@ -148,8 +148,7 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 	margin-right: auto;
 }
 
-.tt-input,
-.tt-hint {
+.tt-input {
   padding: 0.8rem 0.8rem;
   font-size: 2rem;
   border: 1px solid #ccc;
@@ -161,6 +160,10 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   background-color: $backgroundColor;
   left: auto !important;
   padding-left: 0;
+}
+
+.tt-hint {
+  visibility: hidden;
 }
 
 input.typeahead.tt-hint {
@@ -216,6 +219,10 @@ input.typeahead.tt-hint {
 .tt-suggestion p {
     margin: 0;
     color: #636363 !important;
+}
+
+.tt-suggestion.tt-selectable {
+  color: white;
 }
 
 .centered {
