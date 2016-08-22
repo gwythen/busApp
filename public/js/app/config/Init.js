@@ -5,7 +5,7 @@ require.config({
     paths:{
         // Core Libraries
         "jquery":"../libs/jquery",
-        "underscore":"../libs/lodash",
+        "underscore":"../libs/underscore",
         "backbone":"../libs/backbone",
         "marionette":"../libs/backbone.marionette",
         "handlebars":"../libs/handlebars",
@@ -14,6 +14,8 @@ require.config({
 
         // Plugins
         "backbone.validateAll":"../libs/plugins/Backbone.validateAll",
+        "backbone.babysitter":"../libs/plugins/Backbone.babysitter",
+        "backbone.wreqr":"../libs/plugins/Backbone.wreqr",
         "typeahead":"../libs/plugins/typeahead.jquery",
         "bloodhound":"../libs/plugins/bloodhound",
         "text":"../libs/plugins/text",
@@ -44,13 +46,15 @@ require.config({
           "exports": "Swiper"
         },
         // Backbone.validateAll plugin (https://github.com/gfranko/Backbone.validateAll)
-        "backbone.validateAll":["backbone"]
+        "backbone.validateAll":["backbone"],
+        "backbone.babysitter":["backbone"],
+        "backbone.wreqr":["backbone"]
 
     }
 });
 
 // Includes Desktop Specific JavaScript files here (or inside of your Desktop router)
-require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "typeahead", "bloodhound", "swiper", "backbone.validateAll", "socketio", "moment"],
+require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "typeahead", "bloodhound", "swiper", "backbone.validateAll", "backbone.wreqr", "backbone.babysitter", "socketio", "moment"],
     function (App, AppRouter, Controller) {
         App.appRouter = new AppRouter({
             controller:new Controller()

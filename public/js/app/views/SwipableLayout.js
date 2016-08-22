@@ -49,7 +49,7 @@ define([
       },
     });
 
-    return Marionette.Layout.extend({
+    return Marionette.LayoutView.extend({
       template: Handlebars.compile(template),
       regions: {
         viewsHolder: "#viewsHolder"

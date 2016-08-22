@@ -49,9 +49,9 @@
         });
 
         var ChatMessagesView = Marionette.CollectionView.extend({
-          itemView: MessageItem,
+          childView: MessageItem,
 
-          itemViewOptions: function(){
+          childViewOptions: function(){
               return{
                   username: this.options.username
               }
@@ -62,7 +62,7 @@
           }
         });
 
-        return Marionette.Layout.extend({
+        return Marionette.LayoutView.extend({
             template: Handlebars.compile(template),
             regions: {
               'messages': ".chat-messages"
