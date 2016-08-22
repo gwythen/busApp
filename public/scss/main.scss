@@ -409,6 +409,14 @@ span.glyphicon.glyphicon-sort {
 
 /* -------------- Clock Spinner -------------- */
 
+.loading-view {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: $backgroundColor;
+  margin-left: -15px;
+}
+
 .loading-container {
   position: absolute;
   top: 50%;
