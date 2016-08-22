@@ -7,7 +7,7 @@ define([
 ) {
 	var ChatMessage = Backbone.Model.extend({
 		defaults: {
-			sender: "",
+			username: "",
 			message: "",
 			time: (new Date()).getTime(),
 			type: "text"

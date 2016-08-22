@@ -489,7 +489,7 @@ DataProvider.prototype.getItinerarySchedules = function(itins, depId, arrId, rou
   });
 };
 
-DataProvider.prototype.saveChatMessage = function(lineid, username, message, callback) {
+DataProvider.prototype.saveChatMessage = function(lineid, username, message, time, callback) {
   //First, we check if the room for the bus line exists
   console.log("line " + lineid);
   console.log("user " + username);
@@ -526,8 +526,7 @@ DataProvider.prototype.saveChatMessage = function(lineid, username, message, cal
   });
 
   var insertMessage = function() {
-    var time = moment().format('YYYY-MM-DD HH:mm:ss');
-    query('INSERT INTO room_' + lineid + ' (message, username, time, type) VALUES ($1, $2, $3, $4)', [message, username, time, "text"], function(err,res){
+    query('INSERT INTO room_' + lineid + ' (message, username, time, type) VALUES ($1, $2, $3, $4) RETURNING id', [message, username, time, "text"], function(err,res){
       if(err) throw err;
 
       console.log('Message saved!');
