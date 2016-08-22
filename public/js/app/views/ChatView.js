@@ -88,9 +88,20 @@
 
                 this.chatCollection = new ChatCollection();
                 this.chatCollection.meta("lineid", this.options.line.id);
-                this.chatCollection.fetch();
+                this.chatCollection.fetch({
+                   add: true,
+                   add: true,
+                   remove: false,
+                   update: true
+                });
                 var savedUsername = "";
                 this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, username: savedUsername});
+                // Display the welcome message
+                var message = "Welcome! This is the chat of the line " + this.options.line.linename;
+                this.log(message, {
+                  prepend: true
+                });
+
                 this.initializeSocketEvents();
             },
 
@@ -248,12 +259,6 @@
               // Whenever the server emits 'login', log the login message
               App.socket.on('login', function (data) {
                 connected = true;
-                // Display the welcome message
-                var message = "Welcome " + data.username + "! \n You joined the line " + that.options.line.linename;
-                that.log(message, {
-                  prepend: true
-                });
-                that.addParticipantsMessage(data);
               });
 
               // Whenever the server emits 'new message', update the chat body
