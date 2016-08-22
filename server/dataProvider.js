@@ -473,5 +473,64 @@ DataProvider.prototype.getItinerarySchedules = function(itins, depId, arrId, rou
         })
       }
   });
-}
+};
+
+DataProvider.prototype.saveChatMessage = function(lineid, username, message, callback) {
+  //First, we check if the room for the bus line exists
+  console.log("line " + lineid);
+  console.log("user " + username);
+  console.log("message " + message );
+
+  query('SELECT EXISTS ( ' +
+      'SELECT 1 ' +
+      'FROM   pg_catalog.pg_class c ' +
+      'JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace ' +
+      'AND    c.relname = $1 ' +
+      'AND    c.relkind = \'r\'' +
+    ');', ["room_" + lineid], function(err,res) {
+    if(err) throw err;
+    console.log(res);
+    if(res[0].exists == true) {
+      console.log("the table exists");
+      insertMessage();
+    } else {
+      console.log("The table does not exits, creating it");
+      query("CREATE TABLE room_" + lineid + "(" +
+             "id bigserial NOT NULL," +
+             "message text," +
+             "username text," +
+             "time timestamp," +
+             "type text," +
+             "PRIMARY KEY (id)" +
+             ")" , function(err,rows){
+        if(err) throw err;
+
+        console.log("room_" + lineid + ' table created');
+        insertMessage();
+      });
+    }
+  });
+
+  var insertMessage = function() {
+    var time = moment().format('YYYY-MM-DD HH:mm:ss');
+    query('INSERT INTO room_' + lineid + ' (message, username, time, type) VALUES ($1, $2, $3, $4)', [message, username, time, "text"], function(err,res){
+      if(err) throw err;
+
+      console.log('Message saved!');
+      console.log(res);
+      callback(err, res);
+    });
+  } 
+};
+
+DataProvider.prototype.getMessages = function(lineid, index, qty, callback) {
+    query('SELECT * FROM room_' + lineid + ' ' +
+      'ORDER BY id DESC LIMIT $1', [index + qty], function(err, rows) {
+      if(err) throw err;
+
+      var filteredRows = rows.splice(index, qty);
+      callback(err, filteredRows);
+    });
+};
+
 exports.DataProvider = DataProvider;
