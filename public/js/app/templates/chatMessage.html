@@ -1,0 +1,18 @@
+{{#if isTyping}}
+<div class="message typing">
+{{/if}}
+
+{{#if isLog}}
+<div class="log">
+{{/if}}
+
+{{#if isText}}
+<div class="message">
+{{/if}}
+	
+	{{#unless isLog}}
+	<span class="username" style="color: {{getUsernameColor}};">{{username}}</span>
+	{{/unless}}
+	<span class="messageBody">{{message}}</span>
+	<span class="messagetime">{{getMsgTime}}</span>
+</div>

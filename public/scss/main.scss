@@ -496,3 +496,19 @@ span.glyphicon.glyphicon-sort {
   padding: 0;
   bottom: 0;
 }
+
+.log {
+  display: block !important;
+  margin-left: 2rem;
+  margin-right: 2rem;
+}
+
+.message {
+  display: block !important;
+  margin-left: 2rem;
+  margin-right: 2rem;
+  .username {
+    margin-right: 1rem;
+  }
+}
+

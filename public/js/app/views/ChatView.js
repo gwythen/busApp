@@ -1,12 +1,71 @@
-  define(['App','marionette', 'handlebars', 'underscore', 'text!templates/chat.html'],
-    function (App, Marionette, Handlebars, underscore, template) {
-        //ItemView provides some default rendering logic
-        return Marionette.ItemView.extend({
-            template:Handlebars.compile(template),
+  define(['App','marionette', 'handlebars', 'underscore', 'moment', 'collections/ChatCollection', 'models/ChatMessage', 'text!templates/chat.html', 'text!templates/chatMessage.html'],
+    function (App, Marionette, Handlebars, underscore, moment, ChatCollection, ChatMessage, template, messageTemplate) {
+        
+        var MessageItem = Marionette.ItemView.extend({
+          className: "message",
+          modelEvents: {
+            "change": "render"
+          },
+          
+          template: Handlebars.compile(messageTemplate),
+          templateHelpers: function(){ 
+              var that = this;
+              return {
+                isTyping: function () {
+                    return that.model.get("type") == "typing";
+                },
+                isText: function () {
+                    return that.model.get("type") == "text";
+                },
+                isLog: function () {
+                    return that.model.get("type") == "log";
+                },
+                isMine: function() {
+                  return that.model.get("username") == that.options.username;
+                },
+                getUsernameColor: function() {
+                  COLORS = [
+                    '#e21400', '#91580f', '#f8a700', '#f78b00',
+                    '#58dc00', '#287b00', '#a8f07a', '#4ae8c4',
+                    '#3b88eb', '#3824aa', '#a700ff', '#d300e7'
+                  ];
+                  // Compute hash code
+                  var hash = 7;
+                  for (var i = 0; i < that.options.username.length; i++) {
+                     hash = that.options.username.charCodeAt(i) + (hash << 5) - hash;
+                  }
+                  // Calculate color
+                  var index = Math.abs(hash % COLORS.length);
+                  return COLORS[index];
+                },
+                getMsgTime: function() {
+                  return moment(that.model.get("time")).fromNow();
+                }
+              }
+          }
+        });
 
+        var ChatMessagesView = Marionette.CollectionView.extend({
+          itemView: MessageItem,
+
+          itemViewOptions: function(){
+              return{
+                  username: this.options.username
+              }
+          },
+          onChange: function() {
+            this.render();
+            this.el.scrollTop = this.el.scrollHeight;
+          }
+        });
+
+        return Marionette.Layout.extend({
+            template: Handlebars.compile(template),
+            regions: {
+              'messages': ".chat-messages"
+            },
             ui: {
-              'inputMessage':'.inputMessage',
-              'messages':'.chat-messages',
+              'inputMessage': ".inputMessage",
               'chatView': 'chatView-container'
             },
 
@@ -19,11 +78,6 @@
             initialize: function () {
                 FADE_TIME = 150; // ms
                 TYPING_TIMER_LENGTH = 400; // ms
-                COLORS = [
-                  '#e21400', '#91580f', '#f8a700', '#f78b00',
-                  '#58dc00', '#287b00', '#a8f07a', '#4ae8c4',
-                  '#3b88eb', '#3824aa', '#a700ff', '#d300e7'
-                ];
 
                 // Initialize variables
                 var $window = $(window);
@@ -31,8 +85,17 @@
                 connected = false;
                 typing = false;
                 lastTypingTime = undefined;
-                username = "yoyo";
+
+                this.chatCollection = new ChatCollection();
+                this.chatCollection.meta("lineid", this.options.line.id);
+                this.chatCollection.fetch();
+                var savedUsername = "";
+                this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, username: savedUsername});
                 this.initializeSocketEvents();
+            },
+
+            onShow: function() {
+              this.messages.show(this.chatMessagesView);
             },
 
             onRender: function() {
@@ -61,109 +124,68 @@
             },
 
 
-            addParticipantsMessage: function(data) {
-              var message = '';
-              if (data.numUsers === 1) {
-                message += "there's 1 participant";
-              } else {
-                message += "there are " + data.numUsers + " participants";
-              }
-              this.log(message);
-            },
-
             // Sends a chat message
             sendMessage: function(message) {
-              // Prevent markup from being injected into the message
-              message = this.cleanInput(message);
-              // if there is a non-empty message and a App.socket connection
-              if (message && connected) {
-                this.ui.inputMessage.val('');
-                this.addChatMessage({
-                  username: username,
-                  message: message
+              if (connected) {
+                // Prevent markup from being injected into the message
+                message = this.cleanInput(message);
+                // if there is a non-empty message and a App.socket connection
+                if (message && connected) {
+                  this.ui.inputMessage.val('');
+                  var mes = {
+                    username: this.username,
+                    message: message,
+                    type: "text"
+                  };
+                  this.addChatMessage(mes);
+                  // tell server to execute 'new message' and send along one parameter
+                  App.socket.emit('new message', mes);
+                }
+              } else {
+                var that = this;
+                App.socket.on('login', function (data) {
+                  that.sendMessage(message);
                 });
-                // tell server to execute 'new message' and send along one parameter
-                App.socket.emit('new message', message);
+                this.chatLogin();
+
               }
             },
-              // Log a message
-            log: function(message, options) {
-              var $el = $('<li>').addClass('log').text(message);
-              this.addMessageElement($el, options);
+
+            chatLogin: function() {
+              this.username = "yoyo";
+              var color = this.getUsernameColor(this.username);
+              var room = this.options.line.id;
+              
+              App.socket.emit('add user', {user: this.username, color: color, room: room});
             },
 
-            // Adds the visual chat message to the message list
-            addChatMessage: function(data, options) {
-              // Don't fade the message in if there is an 'X was typing'
-              var $typingMessages = this.getTypingMessages(data);
-              options = options || {};
-              if ($typingMessages.length !== 0) {
-                options.fade = false;
-                $typingMessages.remove();
+            getUsernameColor: function(username) {
+              COLORS = [
+                '#e21400', '#91580f', '#f8a700', '#f78b00',
+                '#58dc00', '#287b00', '#a8f07a', '#4ae8c4',
+                '#3b88eb', '#3824aa', '#a700ff', '#d300e7'
+              ];
+              // Compute hash code
+              var hash = 7;
+              for (var i = 0; i < username.length; i++) {
+                 hash = username.charCodeAt(i) + (hash << 5) - hash;
               }
-
-              var $usernameDiv = $('<span class="username"/>')
-                .text(data.username)
-                .css('color', this.getUsernameColor(data.username));
-              var $messageBodyDiv = $('<span class="messageBody">')
-                .text(data.message);
-
-              var typingClass = data.typing ? 'typing' : '';
-              var $messageDiv = $('<li class="message"/>')
-                .data('username', data.username)
-                .addClass(typingClass)
-                .append($usernameDiv, $messageBodyDiv);
-
-              this.addMessageElement($messageDiv, options);
+              // Calculate color
+              var index = Math.abs(hash % COLORS.length);
+              return COLORS[index];
             },
+
               // Adds the visual chat typing message
             addChatTyping: function(data) {
-              data.typing = true;
+              data.type = "typing";
               data.message = 'is typing';
               this.addChatMessage(data);
             },
 
             // Removes the visual chat typing message
             removeChatTyping: function(data) {
-              this.getTypingMessages(data).fadeOut(function () {
-                $(this).remove();
-              });
-            },
-
-            // Adds a message element to the messages and scrolls to the bottom
-            // el - The element to add as a message
-            // options.fade - If the element should fade-in (default = true)
-            // options.prepend - If the element should prepend
-            //   all other messages (default = false)
-            addMessageElement: function(el, options) {
-              var $el = $(el);
-
-              // Setup default options
-              if (!options) {
-                options = {};
-              }
-              if (typeof options.fade === 'undefined') {
-                options.fade = true;
-              }
-              if (typeof options.prepend === 'undefined') {
-                options.prepend = false;
-              }
-
-              // Apply options
-              if (options.error) {
-                $el.addClass("error");
-              }
-              if (options.fade) {
-                $el.hide().fadeIn(FADE_TIME);
-              }
-              if (options.prepend) {
-                this.ui.messages.prepend($el);
-              } else {
-                this.ui.messages.append($el);
-              }
-
-              this.ui.messages.scrollTop = this.ui.messages.scrollHeight;
-              this.ui.chatView.scrollTop = this.ui.chatView.scrollHeight;
+              var model = this.getTypingMessages(data);
+              this.chatCollection.remove(model);
             },
 
             // Prevents input from having injected markup
@@ -193,21 +215,32 @@
 
             // Gets the 'X is typing' messages of a user
             getTypingMessages: function(data) {
-              return $('.typing.message').filter(function (i) {
-                return $(this).data('username') === data.username;
-              });
+              return this.chatCollection.find(function(model) { return model.get('username') === data.username; });
             },
 
-            // Gets the color of a username through our hash function
-            getUsernameColor: function(username) {
-              // Compute hash code
-              var hash = 7;
-              for (var i = 0; i < username.length; i++) {
-                 hash = username.charCodeAt(i) + (hash << 5) - hash;
+            addParticipantsMessage: function(data) {
+              var message = '';
+              if (data.numUsers === 1) {
+                message += "there's 1 participant";
+              } else {
+                message += "there are " + data.numUsers + " participants";
               }
-              // Calculate color
-              var index = Math.abs(hash % COLORS.length);
-              return COLORS[index];
+
+              this.log(message);
+            },
+
+            log: function(message, options) {
+              var messageModel = {
+                message: message,
+                type: "log",
+                time: new Date().getTime()
+              }
+
+              this.chatCollection.add(new ChatMessage(messageModel));
+            },
+
+            addChatMessage: function(data, options) {
+              this.chatCollection.add(new ChatMessage(data));
             },
 
             initializeSocketEvents: function() {
@@ -216,7 +249,7 @@
               App.socket.on('login', function (data) {
                 connected = true;
                 // Display the welcome message
-                var message = "Welcome " + data.username + "!";
+                var message = "Welcome " + data.username + "! \n You joined the line " + that.options.line.linename;
                 that.log(message, {
                   prepend: true
                 });
