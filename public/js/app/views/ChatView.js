@@ -24,7 +24,12 @@
                     return that.model.get("type") == "fb";
                 },
                 isMine: function() {
-                  return that.model.get("username") == that.options.username;
+                  if(that.options.username == "") {
+                    return false;
+                  } else {
+                    return that.model.get("username") == that.options.username;
+                  }
+                  
                 },
                 getUsernameColor: function() {
                   COLORS = [
@@ -69,13 +74,15 @@
               'messages': ".chat__messages"
             },
             ui: {
-              'inputMessage': ".chat-input input"
+              'inputMessage': "#chatInput",
+              'nameInput': "#nameInput"
             },
 
             events: {
-                'input :input' : 'onInput',
-                'click :input': 'onClickInput',
-                'keyup :input': 'onKeyDownInput',
+                'input #chatInput' : 'onInput',
+                'click #chatInput': 'onClickInput',
+                'keyup #chatInput': 'onKeyDownInput',
+                'click #loginButton': "onClickLogin",
                 'click .send-button': 'onEnter'
             },
 
@@ -98,8 +105,11 @@
                    remove: false,
                    update: true
                 });
-                var savedUsername = "yoyo";
-                this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, username: savedUsername});
+
+                this.fetchFromLocalStorage();
+                this.username = this.busAppData.username ? this.busAppData.username : "";
+
+                this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, username: this.username});
                 // Display the welcome message
                 var message = "Welcome! This is the chat of the line " + this.options.line.linename;
                 this.log(message, {
@@ -107,6 +117,9 @@
                 });
 
                 this.initializeSocketEvents();
+                if(this.username != "") {
+                  this.chatLogin(this.username);
+                }
 
             },
 
@@ -163,17 +176,24 @@
                   App.socket.emit('new message', mes);
                 }
               } else {
-                var that = this;
-                App.socket.on('login', function (data) {
-                  that.sendMessage(message);
-                });
-                this.chatLogin();
-
+                this.tempmessage = message;
+                $(this.el).addClass("username-form-open");
               }
             },
 
-            chatLogin: function() {
-              this.username = "yoyo";
+            onClickLogin: function() {
+              var that = this;
+              App.socket.on('login', function (data) {
+                 that.sendMessage(that.tempmessage);
+                 that.tempmessage = undefined;
+              });
+              this.chatLogin(this.ui.nameInput.val());
+              $(this.el).removeClass("username-form-open");
+            },
+
+            chatLogin: function(name) {
+              this.username = name;
+              this.setInLocalStorage();
               var color = this.getUsernameColor(this.username);
               var room = this.options.line.id;
               
@@ -279,13 +299,13 @@
               // Whenever the server emits 'user joined', log it in the chat body
               App.socket.on('user joined', function (data) {
                 that.log(data.username + ' joined');
-                that.addParticipantsMessage(data);
+                //that.addParticipantsMessage(data);
               });
 
               // Whenever the server emits 'user left', log it in the chat body
               App.socket.on('user left', function (data) {
                 that.log(data.username + ' left');
-                that.addParticipantsMessage(data);
+                //that.addParticipantsMessage(data);
                 that.removeChatTyping(data);
               });
 
@@ -302,7 +322,28 @@
               App.socket.on('loading:end', function() {
                 console.log("loading:end");
               });
-            }
+            },
+            fetchFromLocalStorage: function() {
+              if(localStorage.getItem('busApp')) {
+                try {
+                  var busAppData = JSON.parse(localStorage.getItem('busApp'));
+                  this.busAppData = busAppData;
+                  return true;
+                } catch (e) {
+                    return false;
+                }
+              } else {
+                return false;
+              }
+            },
+            
+            setInLocalStorage: function() {
+              if(this.username != "") {
+                this.busAppData.username = this.username;
+                localStorage.setItem("busApp", JSON.stringify(this.busAppData));
+              }
+            },
+
 
         });
   });

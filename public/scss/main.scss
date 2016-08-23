@@ -526,6 +526,12 @@ $chatInputHeight: 5rem;
 
 .chatPage-container {
   padding-top: 7rem;
+  &.username-form-open {
+    overflow: hidden;
+    .chat-username-container {
+      display: block;
+    }
+  }
 }
 
 .chatView-container {
@@ -757,6 +763,7 @@ $chatInputHeight: 5rem;
     bottom: 0;
     display: table;
     font-size: 1.6rem;
+    
     input {
         border-bottom: 0;
         position: relative;
@@ -767,6 +774,7 @@ $chatInputHeight: 5rem;
         border: none;
         padding-left: 1rem;
         font-size: 1.6rem;
+        outline: none;
     }
 
     .send-button {
@@ -787,6 +795,52 @@ $chatInputHeight: 5rem;
     margin: auto;
     min-height: 1rem;
   }
+}
+
+.chat-username-container {
+    display: none;
+    position: absolute;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    top: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.chat-username-form {
+    background-color: white;
+    border-radius: 6px;
+    width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    top: 30%;
+    padding: 2rem;
+    text-align: center;
+    font-size: 2.5rem;
+    p {
+      font-size: 3rem;
+      text-align: center;
+      color: $contentColor;
+    }
+
+    input {
+      border: none;
+      width: 80%;
+      font-size: 2.5rem;
+      text-align: center;
+      border-bottom: 1px solid gray;
+      padding-bottom: 0.5rem;
+      margin-bottom: 2rem;
+      margin-top: 1rem;
+      outline: none;
+    }
+
+    .btn-lg {
+      color: $contentColor;
+      border-color: $contentColor;
+    }
+    
 }
 
 

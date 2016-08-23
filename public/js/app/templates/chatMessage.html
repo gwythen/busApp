@@ -7,7 +7,11 @@
 		{{#if isFB}}
 		<div class="chat-message chat-message--fb">
 		{{else}}
-		<div class="chat-message chat-message--you">
+			{{#if isTyping}}
+			<div class="chat-message chat-message--you typing">
+			{{else}}
+			<div class="chat-message chat-message--you">
+			{{/if}}
 		{{/if}}
 	{{/if}}
 {{/if}}

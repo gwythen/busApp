@@ -70,7 +70,6 @@ define([
       } else {
         return false;
       }
-
     },
     
     setInLocalStorage: function() {
