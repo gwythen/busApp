@@ -24,10 +24,10 @@
                     return that.model.get("type") == "fb";
                 },
                 isMine: function() {
-                  if(that.options.username == "") {
+                  if(that.options.username() == "") {
                     return false;
                   } else {
-                    return that.model.get("username") == that.options.username;
+                    return that.model.get("username") == that.options.username();
                   }
                   
                 },
@@ -39,8 +39,8 @@
                   ];
                   // Compute hash code
                   var hash = 7;
-                  for (var i = 0; i < that.options.username.length; i++) {
-                     hash = that.options.username.charCodeAt(i) + (hash << 5) - hash;
+                  for (var i = 0; i < that.options.username().length; i++) {
+                     hash = that.options.username().charCodeAt(i) + (hash << 5) - hash;
                   }
                   // Calculate color
                   var index = Math.abs(hash % COLORS.length);
@@ -118,7 +118,9 @@
                 this.fetchFromLocalStorage();
                 this.username = this.busAppData.username ? this.busAppData.username : "";
 
-                this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, username: this.username});
+                this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, username: _.bind(function() {
+                  return this.username;
+                }, this)});
                 // Display the welcome message
                 var message = "Welcome! This is the chat of the line " + this.options.line.linename;
                 this.log(message, {

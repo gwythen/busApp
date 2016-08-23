@@ -547,6 +547,7 @@ $chatInputHeight: 5rem;
     margin-top: 1rem;
     margin-bottom: 1rem;
     padding-left: 2rem;
+    padding-right: 2rem;
 
     &__bubble {
       border-radius: 10px;
@@ -554,7 +555,7 @@ $chatInputHeight: 5rem;
       overflow: hidden;
       font-size: 1.8rem;
       display: inline-block;
-      word-break: break-all;
+      word-break: break-word;
 
       &--withMap {
         width: 100%;
@@ -663,7 +664,7 @@ $chatInputHeight: 5rem;
 
   .chat-message--me {
     .chat-message__body {
-      margin-right: 0.8rem;
+      margin-right: 0;
       text-align: right;
     }
     p {
