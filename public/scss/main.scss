@@ -1,8 +1,18 @@
 @import "compass";
 
 $backgroundColor: #0578b3;
+$lightBackgroundColor: #F8FDFF;
 $contentColor: #5e5e5e;
 $labelColor: #393939;
+$huppGreen: #4eb85f;
+$lightRed: #fd6162;
+$lightGreen: #3dc855;
+$lightMediumGray: rgb(184, 184, 184);
+$deepBlue: #4183D7;
+$darkGray: #4d4c4c;
+$lightGray: rgb(219, 219, 219);
+$lightBlue:#6fb1fc;
+$orange: #ffa347;
 
 html {
   font-size: 0.6rem;
@@ -11,7 +21,7 @@ html {
 
 body {
 	color: $contentColor;
-  background-color: #F8FDFF;
+  background-color: $lightBackgroundColor;
   margin: 0;
   .back-icon {
     display: none;
@@ -23,6 +33,9 @@ body {
 
 body.settings {
   background-color: $backgroundColor;
+  header {
+    background-color: $backgroundColor;
+  }
   .navbar a {
     color: white;
     &:active {
@@ -44,12 +57,14 @@ body.chat {
   .gear-icon {
     display: none;
   }
+  //overflow: hidden;
 }
 
 header {
 	z-index: 100;
-	position: absolute;
+	position: fixed;
 	width: 100%;
+  background-color: $lightBackgroundColor;
 }
 
 p, legend, h1, h2, h3, h4, h5, h6 {
@@ -494,42 +509,284 @@ span.glyphicon.glyphicon-sort {
 
 /* -------------- Chat -------------- */
 
-.chatView-container {
+
+$chatInputHeight: 5rem;
+
+.chat__messages {
+  & > *:last-child {
+    margin-bottom:  7rem;
+  }
+  top: 0;
+  overflow-y: scroll;
+  width: 100%;
+  .push {
+    height: 2.6rem;
+  }
+}
+
+.chatPage-container {
   padding-top: 7rem;
 }
 
-.chat-messages {
-  padding-bottom: 6rem;
-}
+.chatView-container {
+  position: relative;
+  height: 100%;
+  .chat-message {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding-left: 2rem;
 
-.inputMessage {
-  height: 4rem;
-  border: 1px solid black;
-  position: fixed;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  bottom: 0;
-  font-size: 1.5rem;
-  padding-left: 1rem;
-}
+    &__bubble {
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+      overflow: hidden;
+      font-size: 1.8rem;
+      display: inline-block;
 
-.log {
-  display: block !important;
-  margin-left: 2rem;
-  margin-right: 2rem;
-  font-size:1.5rem;
-}
+      &--withMap {
+        width: 100%;
+      }
 
-.message {
-  font-size:1.5rem;
-  display: block !important;
-  margin-left: 2rem;
-  margin-right: 2rem;
-  margin-top: 0.8rem;
-  margin-bottom: 0.8rem;
-  .username {
-    margin-right: 1rem;
+      .accepted {
+        &:before {
+          color: $huppGreen;
+        }
+      }
+      .canceled {
+        &:before {
+          color: $lightRed;
+        }
+      }
+
+      .started, .approaching {
+        &:before {
+          color: $lightGreen;
+        }
+      }
+    }
+
+    &__body {
+      max-width: 80%;
+      margin-left: auto;
+        margin-right: auto;
+    }
+
+    &__info {
+      font-size: 1.3rem;
+      color: $lightMediumGray;
+      //color: #A2A2A2;
+      font-weight: 400;
+/*      margin-left: 0.6rem;
+      margin-right: 0.6rem;*/
+      margin-bottom: 0.125rem;
+    }
+
+    &__large-icon {
+      .icon {
+        padding-left: 0;
+        font-size: 3rem;
+        margin-right: 0.5rem;
+      }
+      p {
+        padding-left: 0.8rem;
+      }
+    }
+
+    p {
+      display: table-cell;
+      vertical-align: middle;
+    }
+  }
+
+  .chat-message--you {
+    .chat-message__avatar {
+      padding-left: 0.5rem;
+    }
+    p {
+      color: $contentColor;
+    }
+    .chat-message__body {
+      direction: ltr;
+      margin-left: 0.2rem;
+    }
+  }
+
+
+  .chat-message--you, .chat-message--me {
+    .chat-message__bubble {
+      text-align: left;
+      .icon-right {
+        display: table-cell;
+        vertical-align: top;
+        padding-left: 0.8rem;
+        font-size: 1.4rem;
+        &:before {
+          margin-right: -0.3rem;
+        }
+      }
+      .badged {
+        left:0.5rem;
+        .icon {
+          &:before {
+            margin-right: 0;
+            }
+        }
+      }
+      .icon-stack-cover {
+        font-size: 1.4rem;
+        &:before {
+          color: white;
+        }
+        .icon-stacked {
+          &:before {
+            position: initial;
+            display: initial;
+            font-size: 1.4rem;
+          }
+        }
+      }
+    }
+  }
+
+  .chat-message--me {
+    .chat-message__body {
+      margin-right: 0.8rem;
+      text-align: right;
+    }
+    p {
+      color: white;
+    }
+    .chat-message__bubble {
+        background-color: $huppGreen;
+    }
+    .changed {
+      background-color: $deepBlue;
+      color: white;
+    }
+  }
+
+  .chat-message--you {
+    .chat-message__bubble {
+      background: #dfdfdf;
+      color: $darkGray;
+    }
+  }
+
+  .chat-message--fb {
+    .chat-message__bubble {
+      background: #0084ff;
+      color: white;
+    }
+  }
+
+  .chat-message--you, .chat-message--me {
+    .chat-message__bubble {
+        &--negotiation {
+          background: white;
+        }
+      }
+  }
+
+  .chat-message--hupp {
+    .chat-message__bubble {
+      background-color: white;
+    }
+    p {
+      color: $contentColor;
+    }
+  }
+
+  .chat-message--system {
+    text-align: center;
+    border-top: 1px solid $lightGray;
+    border-bottom: 1px solid $lightGray;
+    padding-top: 0.3rem;
+    padding-bottom: 0.4rem;
+    margin-top: 0.7rem;
+    margin-bottom: 0.7rem;
+    p {
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 0.3rem;
+    }
+    img {
+      display: inline-block;
+        vertical-align: middle;
+    }
+  }
+
+    .chat-message--me .chat-map-message__header {
+      background: $lightBlue;
+    }
+    .chat-message--you .chat-map-message__header {
+      background: $orange;
+    }
+
+  .chat-map-message {
+    padding:0;
+    &__place {
+      padding: 0.3rem;
+      p {
+        padding-left: 0.3rem;
+      }
+      .icon {
+        display: table-cell;
+        vertical-align: top;
+        font-size: 1.4rem;
+      }
+      .icon-stack {
+        &:before {
+          color: $lightGreen;
+        }
+      }
+    }
+
+    &__header {
+      padding: 0.4rem 0.5rem 0.3rem;
+        color: white;
+    }
+
+  }
+
+  .chat-input {
+    background-color: white;
+    height: 5rem;
+    border-top: 1px solid #dbdbdb;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    display: table;
+    font-size: 1.6rem;
+    input {
+        border-bottom: 0;
+        position: relative;
+        width: 100%;
+        padding: 0;
+        display: table-cell;
+        height: 100%;
+        border: none;
+        padding-left: 1rem;
+        font-size: 1.6rem;
+    }
+
+    .send-button {
+        color: #4eb85f;
+        font-weight: 400;
+        text-align: center;
+        display: table-cell;
+    }
   }
 }
+
+.chat-message--system {
+  .icon-departure {
+    color: $huppGreen;
+  }
+  .chat-message__content {
+    width: 80%;
+    margin: auto;
+    min-height: 1rem;
+  }
+}
+
 

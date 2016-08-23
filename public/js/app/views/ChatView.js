@@ -64,18 +64,19 @@
 
         return Marionette.LayoutView.extend({
             template: Handlebars.compile(template),
+            className: "chatPage-container",
             regions: {
-              'messages': ".chat-messages"
+              'messages': ".chat__messages"
             },
             ui: {
-              'inputMessage': ".inputMessage",
-              'chatView': 'chatView-container'
+              'inputMessage': ".chat-input input"
             },
 
             events: {
                 'input :input' : 'onInput',
                 'click :input': 'onClickInput',
                 'keyup :input': 'onKeyDownInput',
+                'click .send-button': 'onEnter'
             },
 
             initialize: function () {
@@ -97,7 +98,7 @@
                    remove: false,
                    update: true
                 });
-                var savedUsername = "";
+                var savedUsername = "yoyo";
                 this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, username: savedUsername});
                 // Display the welcome message
                 var message = "Welcome! This is the chat of the line " + this.options.line.linename;
@@ -106,9 +107,11 @@
                 });
 
                 this.initializeSocketEvents();
+
             },
 
             onShow: function() {
+              this.el.style.height = window.innerHeight - $(".navbar").height() + "px";
               this.messages.show(this.chatMessagesView);
             },
 
@@ -131,10 +134,14 @@
               }
               // When the client hits ENTER on their keyboard
               if (event.which === 13) {
-                this.sendMessage(this.ui.inputMessage.val());
-                App.socket.emit('stop typing');
-                typing = false;
+                this.onEnter();
               }
+            },
+
+            onEnter: function() {
+              this.sendMessage(this.ui.inputMessage.val());
+              App.socket.emit('stop typing');
+              typing = false;
             },
 
 

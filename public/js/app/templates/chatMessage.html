@@ -1,22 +1,31 @@
-{{#if isTyping}}
-<div class="message typing">
-{{/if}}
-
-{{#if isLog}}
-<div class="log">
-{{/if}}
-
-{{#if isText}}
-<div class="message">
-{{/if}}
-
-{{#if isFB}}
-<div class="message fb-message">
-{{/if}}
-	
-	{{#if username}}
-	<span class="username" style="color: {{getUsernameColor}};">{{username}}</span>
+{{#if isMine}}
+		<div class="chat-message chat-message--me">
+{{else}}
+	{{#if isLog}}
+		<div class="chat-message chat-message--hupp">
+	{{else}}
+		{{#if isFB}}
+		<div class="chat-message chat-message--fb">
+		{{else}}
+		<div class="chat-message chat-message--you">
+		{{/if}}
 	{{/if}}
-	<span class="messageBody">{{message}}</span>
-	<span class="messagetime">{{getMsgTime}}</span>
+{{/if}}
+
+    <div key='body' class='media__body'>
+        <div class='chat-message__body'>
+	        <div class="chat-message__info">
+	          	{{#if username}}
+				<span class="username" style="color: {{getUsernameColor}};">{{username}}</span>
+				{{/if}}
+				<span class="messagetime">{{getMsgTime}}</span>
+			</div>
+            <div class='chat-message__bubble'><p>{{message}}</p></div>
+        </div>
+    </div>
 </div>
+
+
+
+
+
