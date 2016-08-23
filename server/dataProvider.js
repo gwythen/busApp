@@ -2,8 +2,9 @@ var pg = require('pg'),
     fs = require('fs'),
     async = require('async'),
     moment = require('moment'),
-    _ = require('lodash');
-    var query = require('pg-query');
+    request = require('request'),
+    _ = require('lodash'),
+    query = require('pg-query');
 
 var DBInitializer = require('./initializeDB');
 
@@ -503,7 +504,7 @@ DataProvider.prototype.saveChatMessage = function(lineid, username, message, tim
       'AND    c.relkind = \'r\'' +
     ');', ["room_" + lineid], function(err,res) {
     if(err) throw err;
-    console.log(res);
+
     if(res[0].exists == true) {
       console.log("the table exists");
       insertMessage();
@@ -530,7 +531,6 @@ DataProvider.prototype.saveChatMessage = function(lineid, username, message, tim
       if(err) throw err;
 
       console.log('Message saved!');
-      console.log(res);
       callback(err, res);
     });
   } 
@@ -541,9 +541,42 @@ DataProvider.prototype.getMessages = function(lineid, index, qty, callback) {
       'ORDER BY id DESC LIMIT $1', [index + qty], function(err, rows) {
       if(err) throw err;
 
-      var filteredRows = _.sortBy(rows.splice(index, qty), "time");
-      callback(err, filteredRows);
+      //For line 230, we also fetch FB posts. 
+      if(lineid == 227) {
+        DataProvider.prototype.getFBPosts(lineid, function(err, res) {
+          var merged = rows.concat(res).splice(index, qty);
+          var filteredRows = _.sortBy(merged, "time");
+          callback(err, filteredRows);
+        });
+      } else {
+        var filteredRows = _.sortBy(rows.splice(index, qty), "time");
+        callback(err, filteredRows);
+      }
     });
+};
+
+DataProvider.prototype.getFBPosts = function(lineid, callback) {
+  var res = [];
+  //The id of line 230
+  if(lineid == 227) {
+    request('https://graph.facebook.com//220546957969451/feed?access_token=1140637272677807|077065e80e85a09ad6415436f4f6622d', function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var jsonres = JSON.parse(response.body);
+        jsonres.data.forEach(function(msg) {
+          var messageModel = {
+            message: msg.message,
+            type: "fb",
+            time: msg.updated_time
+          }
+          res.push(messageModel);
+        })
+        console.log(res);
+      }
+      callback(error, res);
+    });   
+  } else {
+    callback(null, res);
+  }
 };
 
 exports.DataProvider = DataProvider;

@@ -106,7 +106,6 @@
                 });
 
                 this.initializeSocketEvents();
-                this.getFBInfo();
             },
 
             onShow: function() {
@@ -295,23 +294,6 @@
 
               App.socket.on('loading:end', function() {
                 console.log("loading:end");
-              });
-            },
-
-            getFBInfo: function() {
-              var that = this;
-              $.ajax({
-                url: "/api/fbinfo/230"
-              }).done(function(results) {
-                console.log(results);
-                results.data.forEach(function(msg) {
-                  var messageModel = {
-                    message: msg.message,
-                    type: "fb",
-                    time: msg.updated_time
-                  }
-                  that.chatCollection.add(new ChatMessage(messageModel));
-                })
               });
             }
 
