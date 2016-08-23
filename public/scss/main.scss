@@ -552,6 +552,7 @@ $chatInputHeight: 5rem;
       overflow: hidden;
       font-size: 1.8rem;
       display: inline-block;
+      word-break: break-all;
 
       &--withMap {
         width: 100%;

@@ -57,14 +57,12 @@
           childView: MessageItem,
 
           initialize: function() {
-            var that = this;
             this.listenTo(this.collection, 'add', function() {
               $('.chatView-container').css({overflow: "hidden"});
               window.setTimeout(function() {
                   $('.chatView-container').scrollTop(1E10);
               }, 0);       
               $('.chatView-container').css({overflow: "auto"});
-
             });
           },
 
