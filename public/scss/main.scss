@@ -513,8 +513,8 @@ span.glyphicon.glyphicon-sort {
 $chatInputHeight: 5rem;
 
 .chat__messages {
-  & > *:last-child {
-    margin-bottom:  7rem;
+  &>div > *:last-child {
+    padding-bottom:  7rem;
   }
   top: 0;
   overflow-y: scroll;
@@ -522,6 +522,9 @@ $chatInputHeight: 5rem;
   .push {
     height: 2.6rem;
   }
+}
+.hideOverflow{
+  overflow: hidden;
 }
 
 .chatPage-container {
@@ -536,6 +539,7 @@ $chatInputHeight: 5rem;
 
 .chatView-container {
   position: relative;
+  -webkit-overflow-scrolling: touch;
   height: 100%;
   .chat-message {
     margin-top: 1rem;

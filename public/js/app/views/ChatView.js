@@ -56,15 +56,23 @@
         var ChatMessagesView = Marionette.CollectionView.extend({
           childView: MessageItem,
 
+          initialize: function() {
+            var that = this;
+            this.listenTo(this.collection, 'add', function() {
+              $('.chatView-container').css({overflow: "hidden"});
+              window.setTimeout(function() {
+                  $('.chatView-container').scrollTop(1E10);
+              }, 0);       
+              $('.chatView-container').css({overflow: "auto"});
+
+            });
+          },
+
           childViewOptions: function(){
               return{
                   username: this.options.username
               }
           },
-          onChange: function() {
-            this.render();
-            this.el.scrollTop = this.el.scrollHeight;
-          }
         });
 
         return Marionette.LayoutView.extend({
