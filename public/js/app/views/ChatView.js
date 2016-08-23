@@ -105,7 +105,7 @@
                 this.chatCollection.fetch({
                    add: true,
                    add: true,
-                   remove: false,
+                   // remove: false,
                    update: true
                 });
 
@@ -224,6 +224,7 @@
             addChatTyping: function(data) {
               data.type = "typing";
               data.message = 'is typing';
+              data.time = moment().format('YYYY-MM-DD HH:mm:ss');
               this.addChatMessage(data);
             },
 
@@ -260,7 +261,7 @@
 
             // Gets the 'X is typing' messages of a user
             getTypingMessages: function(data) {
-              return this.chatCollection.find(function(model) { return model.get('username') === data.username; });
+              return this.chatCollection.find(function(model) { return model.get('type') === "typing"; });
             },
 
             addParticipantsMessage: function(data) {
