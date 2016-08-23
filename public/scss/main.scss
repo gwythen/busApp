@@ -14,6 +14,8 @@ $lightGray: rgb(219, 219, 219);
 $lightBlue:#6fb1fc;
 $orange: #ffa347;
 
+$headerHeight: 3.8rem;
+
 html {
   font-size: 0.6rem;
   font-family: 'Lato', sans-serif;
@@ -95,7 +97,7 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 	border-radius: 0;
   background-color: transparent;
   border: none;
-  height: 53px;
+  height: $headerHeight;
 }
 
 .navbar a {
@@ -528,7 +530,7 @@ $chatInputHeight: 5rem;
 }
 
 .chatPage-container {
-  padding-top: 7rem;
+  padding-top: $headerHeight;
   &.username-form-open {
     overflow: hidden;
     .chat-username-container {
