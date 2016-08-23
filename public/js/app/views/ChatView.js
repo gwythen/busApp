@@ -98,6 +98,9 @@
                 lastTypingTime = undefined;
 
                 this.chatCollection = new ChatCollection();
+                this.chatCollection.comparator = function (collection) {
+                    return moment(collection.get('time')).valueOf();
+                };
                 this.chatCollection.meta("lineid", this.options.line.id);
                 this.chatCollection.fetch({
                    add: true,
@@ -169,7 +172,8 @@
                   var mes = {
                     username: this.username,
                     message: message,
-                    type: "text"
+                    type: "text",
+                    time: moment().format('YYYY-MM-DD HH:mm:ss')
                   };
                   this.addChatMessage(mes);
                   // tell server to execute 'new message' and send along one parameter
@@ -274,7 +278,7 @@
               var messageModel = {
                 message: message,
                 type: "log",
-                time: new Date().getTime()
+                time: moment().format('YYYY-MM-DD HH:mm:ss')
               }
 
               this.chatCollection.add(new ChatMessage(messageModel));

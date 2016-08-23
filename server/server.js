@@ -181,8 +181,7 @@ io.on('connection', function(socket) {
     console.log("new message");
     console.log(data);
     //save message to db
-    data.time = moment();
-    DataProvider.saveChatMessage(socket.room, socket.username, data.message, data.time.format('YYYY-MM-DD HH:mm:ss'), function(err, message) {
+    DataProvider.saveChatMessage(socket.room, socket.username, data.message, data.time, function(err, message) {
         // we tell the client to execute 'new message'
         socket.broadcast.emit('new message', data);
     });
