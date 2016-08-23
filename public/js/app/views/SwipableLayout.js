@@ -42,7 +42,7 @@ define([
     });
 
     var ViewsList = Marionette.CollectionView.extend({
-      itemView: ViewItem,
+      childView: ViewItem,
       className: "swiper-wrapper",
       collectionEvents: {
         "change": "render"
