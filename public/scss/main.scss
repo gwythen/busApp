@@ -13,6 +13,7 @@ $darkGray: #4d4c4c;
 $lightGray: rgb(219, 219, 219);
 $lightBlue:#6fb1fc;
 $orange: #ffa347;
+$redBackground: #f45f5f;
 
 $headerHeight: 3.8rem;
 
@@ -69,6 +70,24 @@ header {
   background-color: $lightBackgroundColor;
 }
 
+.header__badge {
+  position: absolute;
+  display: inline-block;
+  background: #f45f5f;
+  border-radius: 100px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: white;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: top;
+  width: 16px;
+  height: 16px;
+  margin: 4px 0 0 0;
+  left: 2.4rem;
+  top: -0.1rem;
+}
+
 p, legend, h1, h2, h3, h4, h5, h6 {
     font-weight: 400;
     color: white;
@@ -115,6 +134,10 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 
 .navbar-left {
   float:left !important;
+}
+
+.navbar-right {
+  position: relative;
 }
 
 .header-icon {

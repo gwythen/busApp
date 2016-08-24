@@ -9,6 +9,9 @@
     </div>
     <div class="nav navbar-nav navbar-right">
         <a href="/#chat"><span class="icon-chat"></span></a>
+        {{#if badgeCounter}}
+          <div class="header__badge">{{badgeCounter}}</div>
+        {{/if}}
      </div>
   </div><!-- /.container-fluid -->
 </nav>

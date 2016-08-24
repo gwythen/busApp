@@ -1,8 +1,9 @@
-define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView', 'views/NextBusView', 'models/BusSearch', 'models/ErrorMessage', 'views/ErrorView', 'views/SwipableLayout', 'views/LoadingView', 'views/ChatView', 'socketio'],
-    function (App, Backbone, Marionette, WelcomeView, HeaderView, NextBusView, BusSearch, ErrorMessage, ErrorView, SwipableLayout, LoadingView, ChatView, io) {
+define(['App', 'backbone', 'marionette', 'moment', 'views/WelcomeView', 'views/HeaderView', 'views/NextBusView', 'models/BusSearch', 'models/ErrorMessage', 'collections/ChatCollection', 'views/ErrorView', 'views/SwipableLayout', 'views/LoadingView', 'views/ChatView', 'socketio'],
+    function (App, Backbone, Marionette, moment, WelcomeView, HeaderView, NextBusView, BusSearch, ErrorMessage, ChatCollection, ErrorView, SwipableLayout, LoadingView, ChatView, io) {
     return Backbone.Marionette.Controller.extend({
         initialize:function (options) {
-            App.headerRegion.show(new HeaderView());
+            this.headerView = new HeaderView();
+            App.headerRegion.show(this.headerView);
             this.search = new BusSearch();
             this.joinedChat = false;
         },
@@ -36,19 +37,34 @@ define(['App', 'backbone', 'marionette', 'views/WelcomeView', 'views/HeaderView'
             if(this.search.hasParameters()) {
                 if(!this.joinedChat) {
                     this.joinChat(function() {
-                        var chat = new ChatView({line: that.search.get("line")});
-                        document.body.className = "chat";
-                        App.mainRegion.show(chat);
+                        that.showChat();
                     });
                 } else {
-                    var chat = new ChatView({line: that.search.get("line")});
-                    document.body.className = "chat";
-                    App.mainRegion.show(chat);
+                    that.showChat();
                 }
             } else {
                 App.appRouter.navigate("/settings", true);
             }
-            
+        },
+
+        showChat: function() {
+            this.chatCollection = new ChatCollection();
+            this.chatCollection.comparator = function (collection) {
+                return moment(collection.get('time')).valueOf();
+            };
+            this.chatCollection.meta("lineid", this.search.get("line").id);
+            this.chatCollection.fetch({
+               add: true,
+               add: true,
+               update: true
+            });
+            var chat = new ChatView({line: this.search.get("line"), collection: this.chatCollection});
+            document.body.className = "chat";
+
+            this.listenTo(this.chatCollection, 'add remove', function() {
+              this.headerView.updateBadge(this.chatCollection);
+            });
+            App.mainRegion.show(chat);
         },
 
         fetchResults: function(params) {

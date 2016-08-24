@@ -1,16 +1,14 @@
-define([
-  'backbone',
-  'module',
-  "collections/ResultCollection"
-], function(
-  Backbone,
-  module,
-  ResultCollection
-) {
+define(['backbone','module','models/LocalStorage', "collections/ResultCollection"], 
+  function(Backbone, module, LocalStorage, ResultCollection) {
   var Search = Backbone.Model.extend({
   urlRoot: "api/search",
     initialize: function() {
-      this.fetchFromLocalStorage();
+      this.busAppData = LocalStorage.fetchFromLocalStorage();
+      if(this.busAppData) {
+        this.set("line", this.busAppData.line);
+        this.set("depStop", this.busAppData.depStop);
+        this.set("arrStop",  this.busAppData.arrStop);
+      }
     },
     url: function() {
       var url = this.urlRoot;
@@ -54,23 +52,6 @@ define([
         this.set("currDirection", response[0].direction);
       }
     },
-
-    fetchFromLocalStorage: function() {
-      if(localStorage.getItem('busApp')) {
-        try {
-          var busAppData = JSON.parse(localStorage.getItem('busApp'));
-          console.log(busAppData);
-          this.set("line", busAppData.line);
-          this.set("depStop", busAppData.depStop);
-          this.set("arrStop",  busAppData.arrStop);
-          return true;
-        } catch (e) {
-            return false;
-        }
-      } else {
-        return false;
-      }
-    },
     
     setInLocalStorage: function() {
       if(this.has("line") && this.get("depStop") && this.get("arrStop")) {
@@ -78,7 +59,7 @@ define([
         busAppData.line = this.get("line");
         busAppData.depStop = this.get("depStop");
         busAppData.arrStop = this.get("arrStop");
-        localStorage.setItem("busApp", JSON.stringify(busAppData));
+        LocalStorage.setInLocalStorage(busAppData);
       }
     },
 

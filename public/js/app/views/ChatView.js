@@ -1,5 +1,5 @@
-  define(['App','marionette', 'handlebars', 'underscore', 'moment', 'collections/ChatCollection', 'models/ChatMessage', 'text!templates/chat.html', 'text!templates/chatMessage.html'],
-    function (App, Marionette, Handlebars, underscore, moment, ChatCollection, ChatMessage, template, messageTemplate) {
+  define(['App','marionette', 'handlebars', 'underscore', 'moment', 'models/LocalStorage', 'models/ChatMessage', 'text!templates/chat.html', 'text!templates/chatMessage.html'],
+    function (App, Marionette, Handlebars, underscore, moment, LocalStorage, ChatMessage, template, messageTemplate) {
         
         var MessageItem = Marionette.ItemView.extend({
           className: "message-container",
@@ -102,20 +102,8 @@
                 connected = false;
                 typing = false;
                 lastTypingTime = undefined;
-
-                this.chatCollection = new ChatCollection();
-                this.chatCollection.comparator = function (collection) {
-                    return moment(collection.get('time')).valueOf();
-                };
-                this.chatCollection.meta("lineid", this.options.line.id);
-                this.chatCollection.fetch({
-                   add: true,
-                   add: true,
-                   // remove: false,
-                   update: true
-                });
-
-                this.fetchFromLocalStorage();
+                this.chatCollection = this.options.collection;
+                this.busAppData = LocalStorage.fetchFromLocalStorage();
                 this.username = this.busAppData.username ? this.busAppData.username : "";
 
                 this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, username: _.bind(function() {
@@ -163,15 +151,20 @@
             },
 
             onEnter: function() {
-              this.sendMessage(this.ui.inputMessage.val());
               App.socket.emit('stop typing');
               typing = false;
+              var msg = this.ui.inputMessage.val();
+              if (connected) {
+                this.sendMessage(msg);
+              } else {
+                this.tempmessage = msg;
+                $(this.el).addClass("username-form-open");
+              }
             },
 
 
             // Sends a chat message
             sendMessage: function(message) {
-              if (connected) {
                 // Prevent markup from being injected into the message
                 message = this.cleanInput(message);
                 // if there is a non-empty message and a App.socket connection
@@ -187,10 +180,6 @@
                   // tell server to execute 'new message' and send along one parameter
                   App.socket.emit('new message', mes);
                 }
-              } else {
-                this.tempmessage = message;
-                $(this.el).addClass("username-form-open");
-              }
             },
 
             onClickLogin: function() {
@@ -205,7 +194,7 @@
 
             chatLogin: function(name) {
               this.username = name;
-              this.setInLocalStorage();
+              LocalStorage.setInLocalStorage({username: this.username});
               var color = this.getUsernameColor(this.username);
               var room = this.options.line.id;
               
@@ -335,29 +324,7 @@
               App.socket.on('loading:end', function() {
                 console.log("loading:end");
               });
-            },
-            fetchFromLocalStorage: function() {
-              if(localStorage.getItem('busApp')) {
-                try {
-                  var busAppData = JSON.parse(localStorage.getItem('busApp'));
-                  this.busAppData = busAppData;
-                  return true;
-                } catch (e) {
-                    return false;
-                }
-              } else {
-                return false;
-              }
-            },
-            
-            setInLocalStorage: function() {
-              if(this.username != "") {
-                this.busAppData.username = this.username;
-                localStorage.setItem("busApp", JSON.stringify(this.busAppData));
-              }
-            },
-
-
+            }
         });
   });
 
