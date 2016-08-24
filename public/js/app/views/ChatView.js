@@ -119,7 +119,6 @@
                 //   prepend: true
                 // });
 
-                this.initializeSocketEvents();
                 if(this.username != "") {
                   this.chatLogin(this.username);
                 }
@@ -189,19 +188,24 @@
             onClickLogin: function() {
               var that = this;
               this.socketEventBus.on('login', function (data) {
+                  $(that.el).removeClass("username-form-open");
                  that.sendMessage(that.tempmessage);
                  that.tempmessage = undefined;
+                 that.currentRoom = data.room;
               });
               this.chatLogin(this.ui.nameInput.val());
-              $(this.el).removeClass("username-form-open");
+              
             },
 
             chatLogin: function(name) {
-              this.username = name;
-              LocalStorage.setInLocalStorage({username: this.username});
-              var color = this.getUsernameColor(this.username);
-              var room = this.options.line.id;
-              this.socketEventBus.trigger('send:add-user', {user: this.username, color: color, room: room});
+              if(!this.connected || this.connected && line.id == this.currentRoom) {
+                 this.username = name;
+                 LocalStorage.setInLocalStorage({username: this.username});
+                 connected = true;
+                 this.socketEventBus.trigger('send:add-user', {user: name, room: this.options.line.id});
+              } else {
+                 this.socketEventBus.trigger('send:switch-room', {room: this.options.line.id});
+              }
             },
 
             getUsernameColor: function(username) {
@@ -246,13 +250,6 @@
               }
             },
 
-            initializeSocketEvents: function() {
-              var that = this;
-              // Whenever the server emits 'login', log the login message
-              this.listenTo(this.socketEventBus, 'login', function(data) {
-                connected = true;
-              });
-            },
             onClose: function(){
               this.chatMessagesView.close();
               this.undelegateEvents();

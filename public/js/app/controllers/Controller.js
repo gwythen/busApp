@@ -80,6 +80,10 @@ define(['App', 'backbone', 'marionette', 'moment', 'controllers/ChatController',
                             this.fetchResults(params);
                         }, self);
                     }
+                    var line = self.search.get("line");
+                    if(line) {
+                        self.chatController.chatLogin("", line);
+                    }
                     layout.show();
                 } else {
                     var error = new ErrorMessage();

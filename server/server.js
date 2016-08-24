@@ -183,7 +183,7 @@ io.on('connection', function(socket) {
     //save message to db
     DataProvider.saveChatMessage(socket.room, socket.username, data.message, data.time, function(err, message) {
         // we tell the client to execute 'new message'
-        socket.broadcast.emit('new message', data);
+        socket.broadcast.to(socket.room).emit('new message', data);
     });
   });
 
@@ -192,48 +192,64 @@ io.on('connection', function(socket) {
     // we store the username in the socket session for this client
     if (addedUser) return;
     socket.username = data.user;
-    socket.usercolor = data.color;
     socket.room = data.room;
-    ++numUsers;
-    addedUser = true;
+
     socket.join(data.room);
+    
+    // echo globally (all clients) that a person has connected
+    if(socket.username != "") {
+      ++numUsers;
+      addedUser = true;
+      socket.broadcast.to(socket.room).emit('user joined', {
+        username: socket.username,
+        numUsers: numUsers
+      });
+    }
     socket.emit('login', {
       numUsers: numUsers,
-      username: socket.username
-    });
-    // echo globally (all clients) that a person has connected
-    socket.broadcast.emit('user joined', {
       username: socket.username,
-      numUsers: numUsers
+      room: data.room
     });
 
     console.log("you're in!");
   });
 
-    socket.on('switchRoom', function(newroom){
+    socket.on('switch room', function(newroom){
         // leave the current room (stored in session)
         socket.leave(socket.room);
         // join new room, received as function parameter
         socket.join(newroom);
         socket.emit('updatechat', 'SERVER', 'you have connected to '+ newroom);
         // sent message to OLD room
-        socket.broadcast.to(socket.room).emit('updatechat', 'SERVER', socket.username+' has left this room');
-        // update socket session room title
+        if(socket.username != "") {
+          socket.broadcast.to(socket.room).emit('user left', {
+            username: socket.username,
+            numUsers: numUsers
+          });
+        }
         socket.room = newroom;
-        socket.broadcast.to(newroom).emit('updatechat', 'SERVER', socket.username+' has joined this room');
-        socket.emit('updaterooms', rooms, newroom);
+        if(socket.username != "") {
+          ++numUsers;
+          addedUser = true;
+          socket.broadcast.to(socket.room).emit('user joined', {
+            username: socket.username,
+            numUsers: numUsers,
+            room: socket.room
+          });
+        }
+        //socket.emit('updaterooms', rooms, newroom);
     });
 
   // when the client emits 'typing', we broadcast it to others
   socket.on('typing', function () {
-    socket.broadcast.emit('typing', {
+    socket.broadcast.to(socket.room).emit('typing', {
       username: socket.username
     });
   });
 
   // when the client emits 'stop typing', we broadcast it to others
   socket.on('stop typing', function () {
-    socket.broadcast.emit('stop typing', {
+    socket.broadcast.to(socket.room).emit('stop typing', {
       username: socket.username
     });
   });
@@ -244,10 +260,12 @@ io.on('connection', function(socket) {
       --numUsers;
 
       // echo globally that this client has left
-      socket.broadcast.emit('user left', {
-        username: socket.username,
-        numUsers: numUsers
-      });
+      if(socket.username != "") {
+        socket.broadcast.to(socket.room).emit('user left', {
+          username: socket.username,
+          numUsers: numUsers
+        });
+      }
     }
   });
 

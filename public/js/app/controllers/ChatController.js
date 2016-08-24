@@ -1,15 +1,21 @@
-define(['App', 'backbone', 'marionette', 'models/ChatMessage', 'moment', 'socketio'],
-    function (App, Backbone, Marionette, ChatMessage, moment, io) {
+define(['App', 'backbone', 'marionette', 'models/ChatMessage', 'models/LocalStorage', 'moment', 'socketio'],
+    function (App, Backbone, Marionette, ChatMessage, LocalStorage, moment, io) {
     return Backbone.Marionette.Controller.extend({
         initialize:function (options) {
             this.bus = options.bus;
             this.chatCollection = options.chatCollection;
             this.joinedChat = false;
+            this.connected = false;
+            this.currentRoom = "";
             var that = this;
             this.joinChat(function(joined) {
                 if(joined) {
                     that.initializeSocketEvents();
                     that.initializeBusEvents();
+                    var appData = LocalStorage.fetchFromLocalStorage();
+                    if(appData.line) {
+                        that.chatLogin("", appData.line);
+                    }
                 } else {
                     console.log("could not join the chat");
                 }
@@ -20,7 +26,9 @@ define(['App', 'backbone', 'marionette', 'models/ChatMessage', 'moment', 'socket
               var that = this;
               // Whenever the server emits 'login', log the login message
               App.socket.on('login', function (data) {
-                that.bus.trigger('login', data);
+                that.connected = true;
+                that.currentRoom = data.room;
+                that.bus.trigger("login", data);
               });
 
               // Whenever the server emits 'new message', update the chat body
@@ -67,6 +75,9 @@ define(['App', 'backbone', 'marionette', 'models/ChatMessage', 'moment', 'socket
             this.listenTo(this.bus, 'send:typing', function() {
                 App.socket.emit('typing');
             });
+            this.listenTo(this.bus, 'send:switch-room', function(data) {
+                App.socket.emit('switch room', data);
+            });
         },
         joinChat: function(callback) {
             if(!this.joinedChat) {
@@ -79,6 +90,13 @@ define(['App', 'backbone', 'marionette', 'models/ChatMessage', 'moment', 'socket
             } else {
                 callback(this.joinedChat);
             }          
+        },
+        chatLogin: function(name, line) {
+            if(!this.connected || this.connected && line.id == this.currentRoom) {
+                this.bus.trigger('send:add-user', {user: name, room: line.id});
+            } else {
+                this.bus.trigger('send:switch-room', {room: line.id});
+            }
         },
         addChatMessage: function(data, options) {
           this.chatCollection.add(new ChatMessage(data));

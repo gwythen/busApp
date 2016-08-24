@@ -48,6 +48,9 @@ body.settings {
   .back-icon {
     display: block;
   }
+  .chat-icon {
+    display: none;
+  }
   .gear-icon {
     display: none;
   }
@@ -459,7 +462,6 @@ span.glyphicon.glyphicon-sort {
   width: 100%;
   height: 100%;
   background-color: $backgroundColor;
-  margin-left: -15px;
 }
 
 .loading-container {
