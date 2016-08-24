@@ -71,6 +71,9 @@
                   username: this.options.username
               }
           },
+          onClose: function(){
+            this.collection.unbind("add", this.render);
+          }
         });
 
         return Marionette.LayoutView.extend({
@@ -103,6 +106,7 @@
                 typing = false;
                 lastTypingTime = undefined;
                 this.chatCollection = this.options.collection;
+                this.socketEventBus = this.options.bus;
                 this.busAppData = LocalStorage.fetchFromLocalStorage();
                 this.username = this.busAppData.username ? this.busAppData.username : "";
 
@@ -110,10 +114,10 @@
                   return this.username;
                 }, this)});
                 // Display the welcome message
-                var message = "Welcome! This is the chat of the line " + this.options.line.linename;
-                this.log(message, {
-                  prepend: true
-                });
+                // var message = "Welcome! This is the chat of the line " + this.options.line.linename;
+                // this.log(message, {
+                //   prepend: true
+                // });
 
                 this.initializeSocketEvents();
                 if(this.username != "") {
@@ -151,7 +155,8 @@
             },
 
             onEnter: function() {
-              App.socket.emit('stop typing');
+              this.socketEventBus.trigger('send:stop-typing');
+              
               typing = false;
               var msg = this.ui.inputMessage.val();
               if (connected) {
@@ -176,15 +181,14 @@
                     type: "text",
                     time: moment().format('YYYY-MM-DD HH:mm:ss')
                   };
-                  this.addChatMessage(mes);
-                  // tell server to execute 'new message' and send along one parameter
-                  App.socket.emit('new message', mes);
+
+                  this.socketEventBus.trigger('send:new-message', mes);
                 }
             },
 
             onClickLogin: function() {
               var that = this;
-              App.socket.on('login', function (data) {
+              this.socketEventBus.on('login', function (data) {
                  that.sendMessage(that.tempmessage);
                  that.tempmessage = undefined;
               });
@@ -197,8 +201,7 @@
               LocalStorage.setInLocalStorage({username: this.username});
               var color = this.getUsernameColor(this.username);
               var room = this.options.line.id;
-              
-              App.socket.emit('add user', {user: this.username, color: color, room: room});
+              this.socketEventBus.trigger('send:add-user', {user: this.username, color: color, room: room});
             },
 
             getUsernameColor: function(username) {
@@ -217,20 +220,6 @@
               return COLORS[index];
             },
 
-              // Adds the visual chat typing message
-            addChatTyping: function(data) {
-              data.type = "typing";
-              data.message = 'is typing';
-              data.time = moment().format('YYYY-MM-DD HH:mm:ss');
-              this.addChatMessage(data);
-            },
-
-            // Removes the visual chat typing message
-            removeChatTyping: function(data) {
-              var model = this.getTypingMessages(data);
-              this.chatCollection.remove(model);
-            },
-
             // Prevents input from having injected markup
             cleanInput: function(input) {
               return $('<div/>').text(input).text();
@@ -241,89 +230,38 @@
               if (connected) {
                 if (!typing) {
                   typing = true;
-                  App.socket.emit('typing');
+                  this.socketEventBus.trigger('send:typing');
+                  
                 }
                 lastTypingTime = (new Date()).getTime();
-
+                var that = this;
                 setTimeout(function () {
                   var typingTimer = (new Date()).getTime();
                   var timeDiff = typingTimer - lastTypingTime;
                   if (timeDiff >= TYPING_TIMER_LENGTH && typing) {
-                    App.socket.emit('stop typing');
+                    that.socketEventBus.trigger('send:stop-typing');
                     typing = false;
                   }
                 }, TYPING_TIMER_LENGTH);
               }
             },
 
-            // Gets the 'X is typing' messages of a user
-            getTypingMessages: function(data) {
-              return this.chatCollection.find(function(model) { return model.get('type') === "typing"; });
-            },
-
-            addParticipantsMessage: function(data) {
-              var message = '';
-              if (data.numUsers === 1) {
-                message += "there's 1 participant";
-              } else {
-                message += "there are " + data.numUsers + " participants";
-              }
-
-              this.log(message);
-            },
-
-            log: function(message, options) {
-              var messageModel = {
-                message: message,
-                type: "log",
-                time: moment().format('YYYY-MM-DD HH:mm:ss')
-              }
-
-              this.chatCollection.add(new ChatMessage(messageModel));
-            },
-
-            addChatMessage: function(data, options) {
-              this.chatCollection.add(new ChatMessage(data));
-            },
-
             initializeSocketEvents: function() {
               var that = this;
               // Whenever the server emits 'login', log the login message
-              App.socket.on('login', function (data) {
+              this.listenTo(this.socketEventBus, 'login', function(data) {
                 connected = true;
               });
+            },
+            onClose: function(){
+              this.chatMessagesView.close();
+              this.undelegateEvents();
 
-              // Whenever the server emits 'new message', update the chat body
-              App.socket.on('new message', function (data) {
-                that.addChatMessage(data);
-              });
+              this.$el.removeData().unbind(); 
 
-              // Whenever the server emits 'user joined', log it in the chat body
-              App.socket.on('user joined', function (data) {
-                that.log(data.username + ' joined');
-                //that.addParticipantsMessage(data);
-              });
-
-              // Whenever the server emits 'user left', log it in the chat body
-              App.socket.on('user left', function (data) {
-                that.log(data.username + ' left');
-                //that.addParticipantsMessage(data);
-                that.removeChatTyping(data);
-              });
-
-              // Whenever the server emits 'typing', show the typing message
-              App.socket.on('typing', function (data) {
-                that.addChatTyping(data);
-              });
-
-              // Whenever the server emits 'stop typing', kill the typing message
-              App.socket.on('stop typing', function (data) {
-                that.removeChatTyping(data);
-              });
-
-              App.socket.on('loading:end', function() {
-                console.log("loading:end");
-              });
+              // Remove view from DOM
+              this.remove();  
+              Backbone.View.prototype.remove.call(this);
             }
         });
   });

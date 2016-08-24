@@ -17,8 +17,30 @@ define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars'],
         App.mobile = isMobile();
 
         App.addInitializer(function (options) {
+            Backbone.View.prototype.close = function(){
+              this.remove();
+              this.unbind();
+              if (this.onClose){
+                this.onClose();
+              }
+            }
             Backbone.history.start();
         });
+
+        App.appRegion = {
+
+           show: function(view) {
+                if (this.currentView){
+                  this.currentView.close();
+                }
+
+                this.currentView = view;
+                //this.currentView.render();
+
+                //$("#main").html(this.currentView.el);
+                App.mainRegion.show(this.currentView);
+              }
+        };
         
         // handles links
         App.addInitializer(function setupLinks () {
