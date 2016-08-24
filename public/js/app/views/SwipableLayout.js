@@ -98,7 +98,7 @@ define([
 
       setContentSize: function() {
         $('.swiper-content').css({
-          height: $(window).height() - 53
+          height: $(window).height() - 100
         });
       },
 
