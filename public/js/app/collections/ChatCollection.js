@@ -16,7 +16,7 @@ var ChatCollection = Backbone.Collection.extend({
       var url = this.urlRoot;
       var lineid = this.meta("lineid");
       var index = this.meta("index") ? this.meta("index") : 0;
-      var qty = this.meta("qty") ? this.meta("qty") : 20;
+      var qty = this.meta("qty") ? this.meta("qty") : 400;
 
       url = url + "/" + lineid + "/?index=" + index + "&qty=" + qty;
       

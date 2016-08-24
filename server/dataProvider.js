@@ -537,22 +537,41 @@ DataProvider.prototype.saveChatMessage = function(lineid, username, message, tim
 };
 
 DataProvider.prototype.getMessages = function(lineid, index, qty, callback) {
-    query('SELECT * FROM room_' + lineid + ' ' +
-      'ORDER BY id DESC LIMIT $1', [index + qty], function(err, rows) {
-      if(err) throw err;
-
-      //For line 230, we also fetch FB posts. 
-      if(lineid == 227) {
-        DataProvider.prototype.getFBPosts(lineid, function(err, res) {
-          var merged = rows.concat(res).splice(index, qty);
-          var filteredRows = _.sortBy(merged, "time");
-          callback(err, filteredRows);
-        });
-      } else {
-        var filteredRows = _.sortBy(rows.splice(index, qty), "time");
-        callback(err, filteredRows);
-      }
+    query('SELECT EXISTS ( ' +
+        'SELECT 1 ' +
+        'FROM   pg_catalog.pg_class c ' +
+        'JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace ' +
+        'AND    c.relname = $1 ' +
+        'AND    c.relkind = \'r\'' +
+      ');', ["room_" + lineid], function(err,res) {
+        if(err) throw err;
+        var rows = [];
+        if(res[0].exists == true) {
+          console.log("the table exists");
+          getMessages(function(rows) {
+            //For line 230, we also fetch FB posts. 
+            if(lineid == 227) {
+              DataProvider.prototype.getFBPosts(lineid, function(err, res) {
+                var merged = rows.concat(res).splice(index, qty);
+                var filteredRows = _.sortBy(merged, "time");
+                callback(err, filteredRows);
+              });
+            } else {
+              var filteredRows = _.sortBy(rows.splice(index, qty), "time");
+              callback(err, filteredRows);
+            }
+          });
+        }
     });
+
+    var getMessages = function(callback) {
+      query('SELECT * FROM room_' + lineid + ' ' +
+            'ORDER BY id DESC LIMIT $1', [index + qty], function(err, rows) {
+            if(err) throw err;
+
+            callback(rows);
+      });
+    }
 };
 
 DataProvider.prototype.getFBPosts = function(lineid, callback) {
