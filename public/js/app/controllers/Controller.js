@@ -10,7 +10,7 @@ define(['App', 'backbone', 'marionette', 'moment', 'controllers/ChatController',
             this.chatCollection.comparator = function (collection) {
                 return moment(collection.get('time')).valueOf();
             };
-            this.listenTo(this.chatCollection, 'add', function(newmodel) {
+            this.listenTo(this.chatCollection, 'add reset', function(newmodel) {
               this.headerView.onUpdate(this.chatCollection);
             });
             this.chatController = new ChatController({bus: this.socketBus, chatCollection: this.chatCollection});

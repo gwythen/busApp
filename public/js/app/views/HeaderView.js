@@ -10,13 +10,18 @@ define([ 'marionette', 'handlebars', 'moment', 'models/LocalStorage', 'text!temp
         		this.appData = LocalStorage.fetchFromLocalStorage();
         	},
             templateHelpers: function(){ 
-              	var that = this;
               	return {
                 	badgeCounter: function () {
-                    	return that.newMessages ? that.newMessages.length : 0;
+                    	return this.newMessages ? this.newMessages.length : 0;
                 	},
                 	linename: function() {
-                		return "Ligne " + that.appData.line.linename.split("-")[0];
+                		this.appData = LocalStorage.fetchFromLocalStorage();
+                		if(this.appData.line) {
+                			return "Ligne " + this.appData.line.linename.split("-")[0];
+                		} else {
+                			return "";
+                		}
+                		
                 	}
             	}
             },
