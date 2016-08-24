@@ -1,5 +1,5 @@
 <nav class="navbar navbar-default" role="navigation">
-  <div class="container">
+    
     <!-- Brand and toggle get grouped for better mobile display -->
     <div class="nav navbar-nav navbar-left gear-icon">
         <a href="/#settings"><span class="icon-gear"></span></a>
@@ -7,11 +7,13 @@
     <div class="nav navbar-nav navbar-left back-icon">
         <a id="backButton"><span class="icon-back"></span></a>
     </div>
+
+    <div class="header-title"><p>{{linename}}</p></div>
+
     <div class="nav navbar-nav navbar-right chat-icon">
         <a href="/#chat"><span class="icon-chat"></span></a>
         {{#if badgeCounter}}
           <div class="header__badge">{{badgeCounter}}</div>
         {{/if}}
      </div>
-  </div><!-- /.container-fluid -->
 </nav>

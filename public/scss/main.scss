@@ -30,7 +30,10 @@ body {
     display: none;
   }
   .gear-icon {
-    display: block;
+    display: table-cell;
+  }
+  .chat-icon {
+    display: table-cell;
   }
 }
 
@@ -46,7 +49,7 @@ body.settings {
     }
   }
   .back-icon {
-    display: block;
+    display: table-cell;
   }
   .chat-icon {
     display: none;
@@ -58,10 +61,13 @@ body.settings {
 
 body.chat {
   .back-icon {
-    display: block;
+    display: table-cell;
   }
   .gear-icon {
     display: none;
+  }
+  .header-title {
+    display: table-cell;
   }
   //overflow: hidden;
 }
@@ -71,6 +77,19 @@ header {
 	position: fixed;
 	width: 100%;
   background-color: $lightBackgroundColor;
+}
+
+.header-title {
+    box-sizing: content-box;
+    text-align: center;
+    display: none;
+    vertical-align: middle;
+    p {
+      font-size: 2rem;
+      margin: 0.8rem;
+      color: #5e5e5e;
+      color: $contentColor;
+    }
 }
 
 .header__badge {
@@ -97,13 +116,14 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 }
 
 .navbar {
-  padding-left: 2rem;
-  padding-right: 2rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
+  display: table;
+  width: 100%;
 }
 .navbar .nav {
-  float: right;}
+  float: right;
+}
 
 .navbar-inner {
 	padding-right:0;
@@ -137,10 +157,12 @@ p, legend, h1, h2, h3, h4, h5, h6 {
 
 .navbar-left {
   float:left !important;
+  margin-left: 2rem;
 }
 
 .navbar-right {
   position: relative;
+  margin-right: 2rem;
 }
 
 .header-icon {

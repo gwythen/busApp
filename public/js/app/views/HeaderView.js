@@ -6,11 +6,17 @@ define([ 'marionette', 'handlebars', 'moment', 'models/LocalStorage', 'text!temp
             events: {
                 'click #backButton' : 'onClickBack'
             },
+            initialize: function() {
+        		this.appData = LocalStorage.fetchFromLocalStorage();
+        	},
             templateHelpers: function(){ 
               	var that = this;
               	return {
                 	badgeCounter: function () {
                     	return that.newMessages ? that.newMessages.length : 0;
+                	},
+                	linename: function() {
+                		return "Ligne " + that.appData.line.linename.split("-")[0];
                 	}
             	}
             },
@@ -22,7 +28,7 @@ define([ 'marionette', 'handlebars', 'moment', 'models/LocalStorage', 'text!temp
             	}
             },
             onShow: function() {
-            	this.appData = LocalStorage.fetchFromLocalStorage();
+            	
             },
             updateBadge: function(collection) {
 	            var lastSeen = this.appData.lastSeen ? moment(this.appData.lastSeen) : moment().subtract(1, 'years');
