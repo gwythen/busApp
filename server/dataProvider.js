@@ -561,6 +561,16 @@ DataProvider.prototype.getMessages = function(lineid, index, qty, callback) {
               callback(err, filteredRows);
             }
           });
+        } else {
+          if(lineid == 227) {
+            DataProvider.prototype.getFBPosts(lineid, function(err, res) {
+              var merged = res.splice(index, qty);
+              var filteredRows = _.sortBy(merged, "time");
+              callback(err, filteredRows);
+            });
+          } else {
+            callback(null, []);
+          }
         }
     });
 
