@@ -177,9 +177,7 @@ BusScraper = function(DataProvider) {
 		                    schedule.stop = currStopDbId;
 		                    var time = $(rowColumns[k]).text().split(":");
 
-		                    var scheduletime = moment().year(1970).month(0).date(1).hours(parseInt(time[0])).minutes(parseInt(time[1])).seconds(0);
-
-		                    schedule.scheduletime = scheduletime;
+		                    schedule.scheduletime = moment().year(1970).month(0).date(1).hours(parseInt(time[0])).minutes(parseInt(time[1])).seconds(0);
 		                    rides[k].stopOrder.push({stop_id: schedule.stop});
 		                    rides[k].schedules.push(schedule);
 		                }

@@ -231,14 +231,19 @@ DataProvider.prototype.checkRideExistence = function(allItineraries, currRide, c
         console.log("matching itinerary found");
         DataProvider.prototype.getItineraryRides(itin.id, function(err, rides) {
           //check if the itinerary already has this ride
-          var currsched = _.sortBy(currRide.schedules, 'scheduletime');
+          var currsched = _.sortBy(currRide.schedules, function(sched) {
+            return moment(sched.scheduletime).valueOf();
+          });
+
           for(var z = 0; z < rides.length; z++) {
               var ridesched = rides[z].schedules;
-
               if(currsched.length == ridesched.length) {
                   var allsched = true;
                   for(var x = 0; x < ridesched.length; x++) {
-                      if(!moment(ridesched[x].scheduletime).isSame(currsched[x].scheduletime)) {
+                    var ridetime = moment(ridesched[x].scheduletime);
+                    var currtime = moment(currsched[x].scheduletime);
+
+                      if(!(ridetime.format('YYYY-MM-DD HH:mm:ss') == currtime.format('YYYY-MM-DD HH:mm:ss'))) {
                           allsched = false;
                           break;
                       }
