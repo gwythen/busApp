@@ -1,5 +1,5 @@
-define(['App', 'backbone', 'marionette', 'moment', 'controllers/ChatController', 'views/WelcomeView', 'views/HeaderView', 'views/NextBusView', 'models/BusSearch', 'models/ErrorMessage', 'collections/ChatCollection', 'views/ErrorView', 'views/SwipableLayout', 'views/LoadingView', 'views/ChatView', 'socketio'],
-    function (App, Backbone, Marionette, moment, ChatController, WelcomeView, HeaderView, NextBusView, BusSearch, ErrorMessage, ChatCollection, ErrorView, SwipableLayout, LoadingView, ChatView, io) {
+define(['App', 'backbone', 'marionette', 'moment', 'controllers/ChatController', 'views/WelcomeView', 'views/HeaderView', 'views/NextBusView', 'models/BusSearch', 'models/ErrorMessage', 'collections/ChatCollection', 'views/ErrorView', 'views/SwipableLayout', 'views/LoadingView', 'views/ChatView', 'views/AboutView', 'socketio'],
+    function (App, Backbone, Marionette, moment, ChatController, WelcomeView, HeaderView, NextBusView, BusSearch, ErrorMessage, ChatCollection, ErrorView, SwipableLayout, LoadingView, ChatView, AboutView, io) {
     return Backbone.Marionette.Controller.extend({
         initialize:function (options) {
             this.socketBus = _.extend({}, Backbone.Events);
@@ -27,7 +27,7 @@ define(['App', 'backbone', 'marionette', 'moment', 'controllers/ChatController',
         settings: function() {
             var welcome = new WelcomeView({model: this.search});
             App.appRegion.show(welcome);
-            document.body.className += "settings";
+            document.body.className = "settings";
             welcome.on("fetchResults", function() {
                 App.appRouter.navigate("", true);
             }, this);
@@ -94,6 +94,11 @@ define(['App', 'backbone', 'marionette', 'moment', 'controllers/ChatController',
                 }
             });
         },
+
+        about: function() {
+            document.body.className = "about";
+            App.appRegion.show(new AboutView());
+        }
 
         
 

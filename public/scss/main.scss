@@ -39,6 +39,10 @@ body {
 
 body.settings {
   background-color: $backgroundColor;
+  p {
+    color: white;
+  }
+  
   header {
     background-color: $backgroundColor;
   }
@@ -70,6 +74,15 @@ body.chat {
     display: table-cell;
   }
   //overflow: hidden;
+}
+
+body.about {
+  .back-icon {
+    display: table-cell;
+  }
+  .gear-icon {
+    display: none;
+  }
 }
 
 header {
@@ -112,7 +125,7 @@ header {
 
 p, legend, h1, h2, h3, h4, h5, h6 {
     font-weight: 400;
-    color: white;
+    color: $contentColor;
 }
 
 .navbar {
@@ -502,6 +515,7 @@ span.glyphicon.glyphicon-sort {
   p {
     margin-top: 1rem;
     font-size: 2rem;
+    color: white;
   }
 }
 
@@ -965,3 +979,13 @@ $bubbleSize: 2.5rem;
 //     50% { transform: scale(1.5); }
 //     100% { transform: scale(1.2);}
 // }
+
+.about-container {
+  padding-top: 6rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  text-align: center;
+  font-size: 2rem;
+  padding-bottom: 6rem;
+  color: $contentColor;
+}

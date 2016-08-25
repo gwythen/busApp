@@ -4,7 +4,8 @@ define(['marionette', 'controllers/Controller'], function(Marionette, Controller
        appRoutes: {
            "": "index",
            "settings" : "settings",
-           "chat": "chat"
+           "chat": "chat",
+           "about": "about"
        }
    });
 });
