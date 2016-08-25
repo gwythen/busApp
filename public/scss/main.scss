@@ -758,12 +758,17 @@ $chatInputHeight: 5rem;
   .chat-message--fb {
     .chat-message__bubble {
       background: #0084ff;
-      color: white;
+      p {
+        color: white;
+      }
     }
   }
 
   .chat-message--you, .chat-message--me {
     .chat-message__bubble {
+        p {
+          color: white;
+        }
         &--negotiation {
           background: white;
         }

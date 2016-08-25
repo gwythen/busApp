@@ -29,7 +29,12 @@
                   } else {
                     return that.model.get("username") == that.options.username();
                   }
-                  
+                },
+                getHtmlMessage: function() {
+                  var urlRegex = /(https?:\/\/[^\s]+)/g;
+                  return that.model.get("message").replace(urlRegex, function(url) {
+                      return '<a href="' + url + '">' + url + '</a>';
+                  });
                 },
                 getUsernameColor: function() {
                   COLORS = [
