@@ -1,5 +1,5 @@
-define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars', 'i18next', 'i18next-browser-languagedetector', 'text!locales/en/translation.json', 'text!locales/fr/translation.json'],
-    function ($, Backbone, Marionette, _, Handlebars, i18next, LngDetector, enLocale, frLocale) {
+define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars', 'i18next', 'moment','i18next-browser-languagedetector', 'text!locales/en/translation.json', 'text!locales/fr/translation.json'],
+    function ($, Backbone, Marionette, _, Handlebars, i18next, moment, LngDetector, enLocale, frLocale) {
         var App = new Backbone.Marionette.Application();
 
         //Organize Application into regions corresponding to DOM elements
@@ -25,9 +25,11 @@ define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars', 'i18next
           .use(LngDetector)
           .init({
             resources: resources,
-
+            lng: navigator.language,
             fallbackLng: "en"
           });
+
+          moment.locale(i18next.language);
 
           Handlebars.registerHelper('i18n',
             function(str){
