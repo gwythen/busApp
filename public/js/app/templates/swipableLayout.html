@@ -8,7 +8,12 @@
 	</div>
 	<div class="pagination"></div>
 	
+	{{#if hasSeenAbout}}
 	<a href="/#about"><span class='help-bubble__container'>
+	{{else}}
+	<a href="/#about"><span class='help-bubble__container animated'>
+	{{/if}}
 	  <span class='help-bubble'>?</span>
 	</span></a>
+	
 </div>

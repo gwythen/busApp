@@ -945,6 +945,22 @@ $bubbleSize: 2.5rem;
     height: $size;
 }
 
+.help-bubble__container.animated {
+  .help-bubble:before {
+      $size: $bubbleSize*1.2;
+      content: '\00a0';
+      width: $size;
+      height: $size;
+      position: absolute;
+      top: ($bubbleSize - $size);
+      left: ($bubbleSize - $size);
+      border-radius: 100%;
+      animation: help-bubble-bounce 30s ease infinite;
+      border: 2px solid rgba($huppGreen, 0.25);
+  }
+}
+
+
 .help-bubble {
     width: $bubbleSize;
     height: $bubbleSize;
@@ -961,24 +977,18 @@ $bubbleSize: 2.5rem;
     box-sizing: border-box;
 }
 
-// .help-bubble:before {
-//     $size: $bubbleSize*1.2;
-//     content: '\00a0';
-//     width: $size;
-//     height: $size;
-//     position: absolute;
-//     top: ($bubbleSize - $size);
-//     left: ($bubbleSize - $size);
-//     border-radius: 100%;
-//     animation: help-bubble-bounce 1s ease infinite;
-//     border: 2px solid rgba($huppGreen, 0.25);
-// }
 
-// @keyframes help-bubble-bounce {
-//     0% { transform: scale(1.2); }
-//     50% { transform: scale(1.5); }
-//     100% { transform: scale(1.2);}
-// }
+
+@keyframes help-bubble-bounce {
+    0% { transform: scale(0.8); }
+    20% { transform: scale(0.8); }
+    22% { transform: scale(1.5); }
+    24% { transform: scale(0.8);}
+    26% { transform: scale(1.5); }
+    29% { transform: scale(0.8); }
+    100% { transform: scale(0.8);}
+}
+
 
 .about-container {
   padding-top: 6rem;

@@ -2,14 +2,15 @@ define([
     'App',
     'marionette',
     'handlebars',
-    'text!templates/swipableLayout.html'
+    'text!templates/swipableLayout.html',
+    'models/LocalStorage'
   ],
   function(
     App,
     Marionette,
     Handlebars,
     template,
-    tabItemTemplate
+    LocalStorage
   ) {
 
     var ViewModel = Backbone.Model.extend({
@@ -56,6 +57,14 @@ define([
       },
       ui: {
         viewsHolder: "#viewsHolder"
+      },
+      templateHelpers: function(){ 
+          return {
+            hasSeenAbout: function () {
+              this.appData = LocalStorage.fetchFromLocalStorage();
+              return this.appData["flag-seen-about"];
+            }
+        }
       },
 
       initialize: function() {
