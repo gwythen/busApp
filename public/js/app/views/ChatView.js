@@ -1,5 +1,5 @@
-  define(['App','marionette', 'handlebars', 'underscore', 'moment', 'models/LocalStorage', 'models/ChatMessage', 'text!templates/chat.html', 'text!templates/chatMessage.html'],
-    function (App, Marionette, Handlebars, underscore, moment, LocalStorage, ChatMessage, template, messageTemplate) {
+  define(['App','marionette', 'handlebars', 'underscore', 'moment', 'models/LocalStorage', 'models/ChatMessage', 'text!templates/chat.html', 'text!templates/chatMessage.html', 'text!templates/emptyChat.html'],
+    function (App, Marionette, Handlebars, underscore, moment, LocalStorage, ChatMessage, template, messageTemplate, emptyChatTemplate) {
         
         var MessageItem = Marionette.ItemView.extend({
           className: "message-container",
@@ -60,7 +60,7 @@
 
         var EmptyCollectionView = Marionette.ItemView.extend({
           className: "empty-view",          
-          template: Handlebars.compile("<h1>Bienvenue !</h1><p>Tu es dans le chat de la ligne <p class='linename'>{{linename}}</p></p><p>Ici tu peut communiquer avec les autres voyageurs sur cette ligne.</p>"),
+          template: Handlebars.compile(emptyChatTemplate),
           templateHelpers: function(){ 
               var that = this;
               return {

@@ -1,25 +1,25 @@
 <div class="welcome-content center-aligned">
     <div class="stopInput">
-        <p class="label">Your bus line</p>
+        <p class="label">{{i18n "welcome-view.your-bus-line"}}</p>
         <div class="stops-typeahead" id="line" placeholder="e.g: 230">
             <input class="typeahead"></input>
         </div>
     </div>
     <div class="stopInput">
-        <p class="label">Departure stop (Home)</p>
+        <p class="label">{{i18n "welcome-view.departure-stop"}}</p>
         <div class="stops-typeahead" id="depStop" placeholder="e.g: Magnan/Promenade">
             <input class="typeahead"></input>
         </div>
     </div>
     <div class="stopInput">
-        <p class="label">Arrival stop (Work/School)</p>
+        <p class="label">{{i18n "welcome-view.arrival-stop"}}</p>
         <div class="stops-typeahead" id="arrStop" placeholder: "e.g: Les Templiers">
             <input class="typeahead"></input>
         </div>
     </div>
     <div class="btnContainer">
         <button id="submitButton" type="button" class="btn btn-warning btn-lg">
-           Search
+           {{i18n "welcome-view.search"}}
         </button>
     </div>
 </div>

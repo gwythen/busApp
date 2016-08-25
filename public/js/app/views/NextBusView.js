@@ -1,5 +1,5 @@
-define([ 'marionette', 'handlebars', 'text!templates/nextBus.html'],
-    function (Marionette, Handlebars, template) {
+define([ 'marionette', 'handlebars', 'text!templates/nextBus.html', 'i18next'],
+    function (Marionette, Handlebars, template, i18next) {
         //ItemView provides some default rendering logic
         return Marionette.ItemView.extend({
             template:Handlebars.compile(template),
@@ -36,7 +36,7 @@ define([ 'marionette', 'handlebars', 'text!templates/nextBus.html'],
 			reRenderCounter: function () {
                 var counter = this.model.get('counter');
                 if(counter.expired) {
-                    this.ui.counter.text("TOO LATE!");
+                    this.ui.counter.text(i18next.t("next-bus-view.too-late"));
                 } else {
                     var fiveMins = 5 * 60 * 1000;
                     this.ui.counter.text(counter.textual);

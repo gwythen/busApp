@@ -11,6 +11,7 @@ require.config({
         "handlebars":"../libs/handlebars",
         "socketio": "../libs/socketio",
         "moment": "../libs/moment",
+        "i18next": "../libs/i18next",
 
         // Plugins
         "backbone.validateAll":"../libs/plugins/Backbone.validateAll",
@@ -20,6 +21,7 @@ require.config({
         "bloodhound":"../libs/plugins/bloodhound",
         "text":"../libs/plugins/text",
         "swiper": "../libs/idangerous.swiper",
+        "i18next-browser-languagedetector": "../libs/plugins/i18nextBrowserLanguageDetector",
     },
     // Sets the configuration for your third party scripts that are not AMD compatible
     shim:{
@@ -54,7 +56,7 @@ require.config({
 });
 
 // Includes Desktop Specific JavaScript files here (or inside of your Desktop router)
-require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "typeahead", "bloodhound", "swiper", "backbone.validateAll", "backbone.wreqr", "backbone.babysitter", "socketio", "moment"],
+require(["App", "routers/AppRouter", "controllers/Controller",  "jquery", "typeahead", "bloodhound", "swiper", "backbone.validateAll", "backbone.wreqr", "backbone.babysitter", "socketio", "moment", "i18next", "i18next-browser-languagedetector"],
     function (App, AppRouter, Controller) {
         App.appRouter = new AppRouter({
             controller:new Controller()

@@ -87,7 +87,7 @@ define(['App', 'backbone', 'marionette', 'moment', 'controllers/ChatController',
                     layout.show();
                 } else {
                     var error = new ErrorMessage();
-                    error.set("message", "No results found");
+                    error.set("message", "error-view.no-results-found");
                     error.set("type", "notFound");
                     document.body.className = "";
                     App.appRegion.show(new ErrorView({model: error}));

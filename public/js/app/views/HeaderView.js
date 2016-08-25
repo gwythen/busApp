@@ -1,5 +1,5 @@
-define([ 'marionette', 'handlebars', 'moment', 'models/LocalStorage', 'text!templates/header.html'],
-    function (Marionette, Handlebars, moment, LocalStorage, template) {
+define([ 'marionette', 'handlebars', 'moment', 'models/LocalStorage', 'text!templates/header.html', 'i18next'],
+    function (Marionette, Handlebars, moment, LocalStorage, template, i18next) {
         //ItemView provides some default rendering logic
         return Marionette.ItemView.extend({
             template:Handlebars.compile(template),
@@ -17,7 +17,7 @@ define([ 'marionette', 'handlebars', 'moment', 'models/LocalStorage', 'text!temp
                 	linename: function() {
                 		this.appData = LocalStorage.fetchFromLocalStorage();
                 		if(this.appData.line) {
-                			return "Ligne " + this.appData.line.linename.split("-")[0];
+                			return i18next.t("header-view.line") + this.appData.line.linename.split("-")[0];
                 		} else {
                 			return "";
                 		}

@@ -1,5 +1,5 @@
-define(['backbone','module','models/LocalStorage', "collections/ResultCollection"], 
-  function(Backbone, module, LocalStorage, ResultCollection) {
+define(['backbone','module','moment','models/LocalStorage', "collections/ResultCollection"], 
+  function(Backbone, module, moment, LocalStorage, ResultCollection) {
   var Search = Backbone.Model.extend({
   urlRoot: "api/search",
     initialize: function() {
@@ -45,8 +45,13 @@ define(['backbone','module','models/LocalStorage', "collections/ResultCollection
     },
   
     parse: function(response) {
+      var resultsColl = new ResultCollection();
+      resultsColl.comparator = function (collection) {
+          return moment(collection.get('depHour')).valueOf();
+      };
+      resultsColl.add(response);
       this.set({
-        results: new ResultCollection(response)
+        results: resultsColl
       });
       if(response.length) {
         this.set("currDirection", response[0].direction);

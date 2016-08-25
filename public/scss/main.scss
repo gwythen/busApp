@@ -185,10 +185,10 @@ p, legend, h1, h2, h3, h4, h5, h6 {
   padding-top: 6rem;
   padding-right: 2rem;
   h1 {
-    font-size: 4rem;
+    font-size: 3rem;
   }
   h2 {
-    font-size: 3rem;
+    font-size: 2rem;
   }
   h1, h2 {
     color: $contentColor;
@@ -405,6 +405,7 @@ input.typeahead.tt-hint {
     color: $contentColor;
     float: right;
     clear: both;
+    text-transform: uppercase;
 }
 
 .doubled {

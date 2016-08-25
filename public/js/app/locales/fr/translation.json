@@ -1,0 +1,44 @@
+{
+    "next-bus-view": {
+        "line": "Ligne",
+        "direction": "Direction",
+        "scheduled-time": "Heure de passage",
+        "double-service": "Service Double",
+        "arrival-time": "Heure d'arrivée",
+        "too-late": "TROP TARD!"
+    },
+    "welcome-view": {
+        "your-bus-line": "Votre ligne de bus",
+        "departure-stop": "Arrêt de départ (Maison)",
+        "arrival-stop": "Arrêt d'arrivée (Bureau/École)",
+        "search": "Chercher"
+    },
+    "loading-view": {
+        "loading": "Chargement en cours..."
+    },
+    "error-view": {
+        "no-results-found": "Aucun resultat trouvé pour aujourd'hui"
+    },
+    "chat-view": {
+        "send": "Envoyer",
+        "your-name": "Votre nom",
+        "confirm": "Confirmer",
+        "input-placeholder": "Envoyer un message"
+    },
+    "about-view": {
+        "thank-you": "Merci !",
+        "using-app": "De la part de toute l'équipe Hupp pour avoir utilisé cette application !",
+        "mission": "Nous sommes une startup niçoise qui veut rendre les transports quotidiens plus simples, efficaces et conviviaux.",
+        "hupp-description": "Notre autre application, Hupp, c'est un assistant de voyage pour les covoiturages au quotidien.",
+        "try-it": "Si toi aussi t'en a marre des bouchons, essaye-la !",
+        "contact": "Si tu as juste envie de nous contacter, n'hésite pas le à le faire ici"
+    },
+    "empty-chat-view": {
+        "welcome": "Bienvenue !",
+        "line-chat": "Tu es dans le chat de la ligne ",
+        "communicate": "Ici tu peut communiquer avec les autres voyageurs sur cette ligne."
+    },
+    "header-view": {
+        "line": "Line "
+    }
+}

@@ -1,5 +1,5 @@
-define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars'],
-    function ($, Backbone, Marionette, _, Handlebars) {
+define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars', 'i18next', 'i18next-browser-languagedetector', 'text!locales/en/translation.json', 'text!locales/fr/translation.json'],
+    function ($, Backbone, Marionette, _, Handlebars, i18next, LngDetector, enLocale, frLocale) {
         var App = new Backbone.Marionette.Application();
 
         //Organize Application into regions corresponding to DOM elements
@@ -16,15 +16,24 @@ define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars'],
 
         App.mobile = isMobile();
 
-        App.addInitializer(function (options) {
-            Backbone.View.prototype.close = function(){
-              this.remove();
-              this.unbind();
-              if (this.onClose){
-                this.onClose();
-              }
+        App.addInitializer(function(){
+          var resources = {
+            en : { translation : JSON.parse(enLocale) },
+            fr : { translation : JSON.parse(frLocale) }
+          };
+          i18next
+          .use(LngDetector)
+          .init({
+            resources: resources,
+
+            fallbackLng: "en"
+          });
+
+          Handlebars.registerHelper('i18n',
+            function(str){
+              return (i18next != undefined ? i18next.t(str) : str);
             }
-            Backbone.history.start();
+          );
         });
 
         App.appRegion = {
@@ -52,6 +61,17 @@ define(['jquery', 'backbone', 'marionette', 'underscore', 'handlebars'],
             };
 
           $(document).on('click', 'a[data-applink]', handleAppLink, App);
+        });
+
+        App.addInitializer(function (options) {
+            Backbone.View.prototype.close = function(){
+              this.remove();
+              this.unbind();
+              if (this.onClose){
+                this.onClose();
+              }
+            }
+            Backbone.history.start();
         });
 
         return App;

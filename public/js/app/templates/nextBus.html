@@ -1,17 +1,17 @@
 <div class="nextBus-content right-aligned">
-    <div class="nextLabel">Line</div>
+    <div class="nextLabel">{{i18n "next-bus-view.line"}}</div>
     <div class="nextHeader">{{lineName}}</div>
-    <div class="nextLabel">Direction</div>
+    <div class="nextLabel">{{i18n "next-bus-view.direction"}}</div>
     <div class="nextHeader"><span id="submit" class="glyphicon glyphicon-sort"></span>{{directionDisplay}}</div>
-    <div class="nextLabel">Scheduled Time</div>
+    <div class="nextLabel">{{i18n "next-bus-view.scheduled-time"}}</div>
     <div class="nextHeader depStop">{{depStop}}</div>
     <div class="nextTime">{{depDisplayHour}}</div>
     <div class="counter-container">
         {{#if doubled}}
-        <div class="nextCounter doubled">double service</div>
+        <div class="nextCounter doubled">{{i18n "next-bus-view.double-service"}}</div>
         {{/if}}
         <div class="nextCounter" id="counter"></div>
     </div>
-    <div class="nextLabel">Arrival Time</div>
+    <div class="nextLabel">{{i18n "next-bus-view.arrival-time"}}</div>
     <div class="nextHeader">{{arrDisplayHour}}</div>
 </div>

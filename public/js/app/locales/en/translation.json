@@ -1,0 +1,45 @@
+{
+    "next-bus-view": {
+        "line": "Line",
+        "direction": "Direction",
+        "scheduled-time": "Scheduled Time",
+        "double-service": "Double Service",
+        "arrival-time": "Arrival Time",
+        "too-late": "TOO LATE!"
+    },
+    "welcome-view": {
+        "your-bus-line": "Your bus line",
+        "departure-stop": "Departure Stop (Home)",
+        "arrival-stop": "Arrival Stop (Work/School)",
+        "search": "Search"
+    },
+    "loading-view": {
+        "loading": "Loading"
+    },
+    "error-view": {
+        "no-results-found": "No results found for today"
+    },
+    "chat-view": {
+        "send": "Send",
+        "your-name": "Your name",
+        "confirm": "Confirm",
+        "input-placeholder": "Send a message"
+    },
+    "about-view": {
+        "thank-you": "Thank you!",
+        "using-app": "From the Hupp team for using this app!",
+        "mission": "We are a startup based in Nice that wants to make daily transportation simpler, more efficient and friendly.",
+        "hupp-description": "Our other app, Hupp, is a daily travel assistant for your daily carpooling.",
+        "try-it": "If you too want to get rid of traffic jams, try it!",
+        "contact": "If you want to tell us something, please write to as at"
+    },
+    "empty-chat-view": {
+        "welcome": "Welcome!",
+        "line-chat": "You're in the chat of the bus line ",
+        "communicate": "Here you can communicate with the other travellers on this line."
+    },
+    "header-view": {
+        "line": "Line "
+    }
+
+}

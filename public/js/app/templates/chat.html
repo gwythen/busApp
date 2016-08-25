@@ -1,17 +1,17 @@
 <div class="chatView-container">
 	<div class="chat__messages"></div>
 	<div class='chat-input'>
-	    <input id="chatInput" type="text" placeholder="Envoyer un message"></input>
-	    <div class="send-button">Envoyer</div>
+	    <input id="chatInput" type="text" placeholder="{{i18n "chat-view.input-placeholder"}}"></input>
+	    <div class="send-button">{{i18n "chat-view.send"}}</div>
 	</div>
 </div>
 <div class="chat-username-container">
 	<div class="chat-username-form">
-		<p>Votre nom</p>
+		<p>{{i18n "chat-view.your-name"}}</p>
 		<input id="nameInput" type="text" placeholder="tiger"></input>
 		<div class="btnContainer">
 	        <button id="loginButton" type="button" class="btn btn-warning btn-lg">
-	           Confirmer
+	           {{i18n "chat-view.confirm"}}
 	        </button>
 	    </div>
 	</div>
