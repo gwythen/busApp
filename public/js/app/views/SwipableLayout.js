@@ -47,7 +47,7 @@ define([
       className: "swiper-wrapper",
       collectionEvents: {
         "change": "render"
-      },
+      }
     });
 
     return Marionette.LayoutView.extend({

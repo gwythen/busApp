@@ -608,6 +608,21 @@ $chatInputHeight: 5rem;
   }
 }
 
+.empty-view {
+  padding-top: 5rem;
+  font-size: 1.8rem;
+  text-align: center;
+  padding-right: 4rem;
+  padding-left: 4rem;
+  h1 {
+    color: #909090;
+  }
+  p{
+    color: #909090;
+    margin: 1rem;
+  }
+}
+
 .chatView-container {
   position: relative;
   -webkit-overflow-scrolling: touch;
@@ -766,9 +781,6 @@ $chatInputHeight: 5rem;
 
   .chat-message--you, .chat-message--me {
     .chat-message__bubble {
-        p {
-          color: white;
-        }
         &--negotiation {
           background: white;
         }

@@ -58,8 +58,22 @@
           }
         });
 
+        var EmptyCollectionView = Marionette.ItemView.extend({
+          className: "empty-view",          
+          template: Handlebars.compile("<h1>Bienvenue !</h1><p>Tu es dans le chat de la ligne <p class='linename'>{{linename}}</p></p><p>Ici tu peut communiquer avec les autres voyageurs sur cette ligne.</p>"),
+          templateHelpers: function(){ 
+              var that = this;
+              return {
+                linename: function () {
+                    return that.options.linename
+                },
+              }
+          }
+        });
+
         var ChatMessagesView = Marionette.CollectionView.extend({
           childView: MessageItem,
+          emptyView: EmptyCollectionView,
 
           initialize: function() {
             this.listenTo(this.collection, 'add', function() {
@@ -73,7 +87,8 @@
 
           childViewOptions: function(){
               return{
-                  username: this.options.username
+                  username: this.options.username,
+                  linename: this.options.linename
               }
           },
           onClose: function(){
@@ -115,14 +130,9 @@
                 this.busAppData = LocalStorage.fetchFromLocalStorage();
                 this.username = this.busAppData.username ? this.busAppData.username : "";
 
-                this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, username: _.bind(function() {
+                this.chatMessagesView = new ChatMessagesView({collection: this.chatCollection, linename: this.busAppData.line.linename, username: _.bind(function() {
                   return this.username;
                 }, this)});
-                // Display the welcome message
-                // var message = "Welcome! This is the chat of the line " + this.options.line.linename;
-                // this.log(message, {
-                //   prepend: true
-                // });
 
                 if(this.username != "") {
                   this.chatLogin(this.username);
