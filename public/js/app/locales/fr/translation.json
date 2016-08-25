@@ -34,9 +34,9 @@
         "contact": "Si tu as juste envie de nous contacter, n'hésite pas le à le faire ici"
     },
     "empty-chat-view": {
-        "welcome": "Bienvenue !",
-        "line-chat": "Tu es dans le chat de la ligne ",
-        "communicate": "Ici tu peut communiquer avec les autres voyageurs sur cette ligne."
+        "welcome": "Bienvenues !",
+        "line-chat": "Vous êtes dans la messagerie de la ligne ",
+        "communicate": "Ici vous pouvez communiquer avec les autres voyageurs sur cette ligne."
     },
     "header-view": {
         "line": "Line "
